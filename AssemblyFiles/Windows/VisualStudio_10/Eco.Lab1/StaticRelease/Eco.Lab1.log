@@ -1,0 +1,23 @@
+﻿Build started 17.09.2025 20:13:35.
+     1>Project "C:\HSE\Eco.Lab1\AssemblyFiles\Windows\VisualStudio_10\Eco.Lab1.vcxproj" on node 2 (build target(s)).
+     1>InitializeBuildStatus:
+         Creating "Eco.Lab1\StaticRelease\Eco.Lab1.unsuccessfulbuild" because "AlwaysCreate" was specified.
+       ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I..\..\..\HeaderFiles /I..\..\..\SharedFiles /IC:\HSE\Eco.Framework\Eco.Core1\SharedFiles /IC:\HSE\Eco.Framework\Eco.InterfaceBus1\SharedFiles /IC:\HSE\Eco.Framework\Eco.System1\SharedFiles /IC:\HSE\Eco.Framework\Eco.MemoryManager1\SharedFiles /IC:\HSE\Eco.Framework\Eco.FileSystemManagement1\SharedFiles /IC:\HSE\Eco.Framework\Eco.List1\SharedFiles /Zi /nologo /W3 /WX- /O2 /Oi /Oy- /GL /D WIN32 /D NDEBUG /D _WINDOWS /D UGUID_UTILITY /D ECO_X86_32 /D ECO_WINDOWS /D ECO_WIN32 /D ECO_LIB /D _UNICODE /D UNICODE /Gm- /EHsc /MT /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Eco.Lab1\StaticRelease\\" /Fd"Eco.Lab1\StaticRelease\vc100.pdb" /Gz /TC /analyze- /errorReport:prompt ..\..\..\SourceFiles\CEcoLab1.c ..\..\..\SourceFiles\CEcoLab1Factory.c
+         CEcoLab1.c
+         CEcoLab1Factory.c
+       MakeDirsForLib:
+         Creating directory "C:\HSE\Eco.Lab1\AssemblyFiles\Windows\VisualStudio_10\..\..\..\BuildFiles\Windows\x86\StaticRelease".
+     1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\Microsoft.CppBuild.targets(1151,5): warning MSB8012: TargetPath(C:\HSE\Eco.Lab1\AssemblyFiles\Windows\VisualStudio_10\Eco.Lab1\StaticRelease\1F5DF16EE1BF43B999A434ED38FE8F3A.lib) does not match the Library's OutputFile property value (C:\HSE\Eco.Lab1\BuildFiles\Windows\x86\StaticRelease\1F5DF16EE1BF43B999A434ED38FE8F3A.lib). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Lib.OutputFile).
+       Lib:
+         C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\Lib.exe /OUT:"..\..\..\BuildFiles\Windows\x86\StaticRelease\1F5DF16EE1BF43B999A434ED38FE8F3A.lib" /NOLOGO /LTCG Eco.Lab1\StaticRelease\CEcoLab1.obj
+         Eco.Lab1\StaticRelease\CEcoLab1Factory.obj
+         Eco.Lab1.vcxproj -> C:\HSE\Eco.Lab1\AssemblyFiles\Windows\VisualStudio_10\Eco.Lab1\StaticRelease\1F5DF16EE1BF43B999A434ED38FE8F3A.lib
+       FinalizeBuildStatus:
+         Deleting file "Eco.Lab1\StaticRelease\Eco.Lab1.unsuccessfulbuild".
+         Touching "Eco.Lab1\StaticRelease\Eco.Lab1.lastbuildstate".
+     1>Done Building Project "C:\HSE\Eco.Lab1\AssemblyFiles\Windows\VisualStudio_10\Eco.Lab1.vcxproj" (build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:00.42
