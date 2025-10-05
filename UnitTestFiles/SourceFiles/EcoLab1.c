@@ -322,7 +322,7 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     int16_t result = -1;
 	/* Указатель на системный интерфейс */
     IEcoSystem1* pISys = 0;
-	/* Указатель на интерфейс работы с системной интерфейсной шиной */
+	/* Указатель на интерфейс работы с системной шиной */
     IEcoInterfaceBus1* pIBus = 0;
 	/* Указатель на интерфейс работы с памятью */
     IEcoMemoryAllocator1* pIMem = 0;
@@ -332,7 +332,7 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
 	/* Проверка и создание системного интрефейса */
     result = pIUnk->pVTbl->QueryInterface(pIUnk, &GID_IEcoSystem, (void **)&pISys);
     if (result != 0 || pISys == 0) {
-        printf("ОШИБКА: не удалось получить IEcoSystem1\n");
+        printf("ERROR: failed to obtain IEcoSystem1\n");
 		/* Освобождение системного интерфейса в случае ошибки */
         goto Release;
     }
@@ -341,27 +341,27 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     result = pISys->pVTbl->QueryInterface(pISys, &IID_IEcoInterfaceBus1, (void **)&pIBus);
     if (result != 0 || pIBus == 0) {
 		/* Освобождение в случае ошибки */
-        printf("ОШИБКА: не удалось получить IEcoInterfaceBus1\n");
+        printf("ERROR: failed to obtain IEcoInterfaceBus1\n");
         goto Release;
     }
 
 #ifdef ECO_LIB
     result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoLab1, (IEcoUnknown*)GetIEcoComponentFactoryPtr_1F5DF16EE1BF43B999A434ED38FE8F3A);
     if (result != 0) {
-        printf("ОШИБКА: регистрация компонента не удалась\n");
+        printf("ERROR: component registration failed\n");
         goto Release;
     }
 #endif
 
     result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoMemoryManager1, 0, &IID_IEcoMemoryAllocator1, (void**) &pIMem);
     if (result != 0 || pIMem == 0) {
-        printf("ОШИБКА: не удалось получить IEcoMemoryAllocator1\n");
+        printf("ERROR: failed to obtain IEcoMemoryAllocator1\n");
         goto Release;
     }
 
     result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoLab1, 0, &IID_IEcoLab1, (void**) &pIEcoLab1);
     if (result != 0 || pIEcoLab1 == 0) {
-        printf("ОШИБКА: не удалось получить IEcoLab1\n");
+        printf("ERROR: failed to obtain IEcoLab1\n");
         goto Release;
     }
 
@@ -377,16 +377,16 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         double elapsed;
 
         src = (int32_t*)initIntArr(pIMem, n);
-        if (src == 0) { printf("ОШИБКА: initIntArr не выполнен\n"); goto Release; }
+        if (src == 0) { printf("ERROR: initIntArr failed\n"); goto Release; }
 
-        printf("ТЕСТ INT: исходный массив (n=%u):\n", (unsigned) n);
+        printf("TEST INT: source array (n=%u):\n", (unsigned) n);
         printIntArr(src, n);
 
         /* Для int просто сформируем ранги по значению (вместо масштабирования) */
         {
             int32_t *ranks = 0;
             ranks = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(int32_t)));
-            if (ranks == 0) { printf("ОШИБКА: выделение памяти\n"); goto Release; }
+            if (ranks == 0) { printf("ERROR: memory allocation failed\n"); goto Release; }
             for (i = 0; i < n; ++i) ranks[i] = 0;
             for (i = 0; i < n; ++i) {
                 size_t j;
@@ -397,7 +397,7 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
                 }
             }
             keys = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(int32_t)));
-            if (keys == 0) { pIMem->pVTbl->Free(pIMem, ranks); printf("ОШИБКА: выделение памяти\n"); goto Release; }
+            if (keys == 0) { pIMem->pVTbl->Free(pIMem, ranks); printf("ERROR: memory allocation failed\n"); goto Release; }
             for (i = 0; i < n; ++i) {
                 keys[i] = (int32_t)((ranks[i] << 16) | (i & 0xFFFF));
             }
@@ -411,10 +411,10 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         elapsed = (double)(t1 - t0) / (double)CLOCKS_PER_SEC;
 
         if (result != 0) {
-            printf("ТЕСТ INT: csort вернул ошибку %d\n", result);
+            printf("TEST INT: csort returned error %d\n", result);
         } else {
             out_sorted = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(int32_t)));
-            if (out_sorted == 0) { printf("ОШИБКА: выделение памяти\n"); goto Release; }
+            if (out_sorted == 0) { printf("ERROR: memory allocation failed\n"); goto Release; }
             for (i = 0; i < n; ++i) {
                 uint32_t idx = (uint32_t)keys[i] & 0xFFFF;
                 out_sorted[i] = src[idx];
@@ -423,9 +423,9 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
             for (i = 1; i < n; ++i) {
                 if (out_sorted[i-1] > out_sorted[i]) { ok = 0; break; }
             }
-            printf("ТЕСТ INT: результат:\n");
+            printf("TEST INT: result:\n");
             printIntArr(out_sorted, n);
-            printf("ТЕСТ INT: %s (время = %.6f с)\n\n", ok ? "PASS" : "FAIL", elapsed);
+            printf("TEST INT: %s (time = %.6f s)\n\n", ok ? "PASS" : "FAIL", elapsed);
             pIMem->pVTbl->Free(pIMem, out_sorted);
         }
 
@@ -446,17 +446,17 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         double elapsed;
 
         src = (float*)initFloatArr(pIMem, n);
-        if (src == 0) { printf("ОШИБКА: initFloatArr не выполнен\n"); goto Release; }
+        if (src == 0) { printf("ERROR: initFloatArr failed\n"); goto Release; }
 
-        printf("ТЕСТ float: исходный массив (n=%u):\n", (unsigned) n);
+        printf("TEST float: source array (n=%u):\n", (unsigned) n);
         printFloatArr(src, n);
 
         ranks = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(int32_t)));
-        if (ranks == 0) { printf("ОШИБКА: выделение памяти\n"); goto Release; }
-        if (computeRanksFloat(pIMem, src, n, ranks) != 0) { printf("ОШИБКА: computeRanksFloat\n"); goto Release; }
+        if (ranks == 0) { printf("ERROR: memory allocation failed\n"); goto Release; }
+        if (computeRanksFloat(pIMem, src, n, ranks) != 0) { printf("ERROR: computeRanksFloat\n"); goto Release; }
 
         keys = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(int32_t)));
-        if (keys == 0) { pIMem->pVTbl->Free(pIMem, ranks); printf("ОШИБКА: выделение памяти\n"); goto Release; }
+        if (keys == 0) { pIMem->pVTbl->Free(pIMem, ranks); printf("ERROR: memory allocation failed\n"); goto Release; }
         for (i = 0; i < n; ++i) keys[i] = (int32_t)((ranks[i] << 16) | (i & 0xFFFF));
 
         pIMem->pVTbl->Free(pIMem, ranks);
@@ -467,10 +467,10 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         elapsed = (double)(t1 - t0) / (double)CLOCKS_PER_SEC;
 
         if (result != 0) {
-            printf("ТЕСТ float: csort вернул ошибку %d\n", result);
+            printf("TEST float: csort returned error %d\n", result);
         } else {
             out_sorted = (float*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(float)));
-            if (out_sorted == 0) { printf("ОШИБКА: выделение памяти\n"); goto Release; }
+            if (out_sorted == 0) { printf("ERROR: memory allocation failed\n"); goto Release; }
             for (i = 0; i < n; ++i) {
                 uint32_t idx = (uint32_t)keys[i] & 0xFFFF;
                 out_sorted[i] = src[idx];
@@ -479,9 +479,9 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
             for (i = 1; i < n; ++i) {
                 if (out_sorted[i-1] > out_sorted[i]) { ok = 0; break; }
             }
-            printf("ТЕСТ float: результат:\n");
+            printf("TEST float: result:\n");
             printFloatArr(out_sorted, n);
-            printf("ТЕСТ float: %s (время = %.6f с)\n\n", ok ? "PASS" : "FAIL", elapsed);
+            printf("TEST float: %s (time = %.6f s)\n\n", ok ? "PASS" : "FAIL", elapsed);
             pIMem->pVTbl->Free(pIMem, out_sorted);
         }
 
@@ -502,17 +502,17 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         double elapsed;
 
         src = (double*)initDoubleArr(pIMem, n);
-        if (src == 0) { printf("ОШИБКА: initDoubleArr не выполнен\n"); goto Release; }
+        if (src == 0) { printf("ERROR: initDoubleArr failed\n"); goto Release; }
 
-        printf("ТЕСТ double: исходный массив (n=%u):\n", (unsigned) n);
+        printf("TEST double: source array (n=%u):\n", (unsigned) n);
         printDoubleArr(src, n);
 
         ranks = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(int32_t)));
-        if (ranks == 0) { printf("ОШИБКА: выделение памяти\n"); goto Release; }
-        if (computeRanksDouble(pIMem, src, n, ranks) != 0) { printf("ОШИБКА: computeRanksDouble\n"); goto Release; }
+        if (ranks == 0) { printf("ERROR: memory allocation failed\n"); goto Release; }
+        if (computeRanksDouble(pIMem, src, n, ranks) != 0) { printf("ERROR: computeRanksDouble\n"); goto Release; }
 
         keys = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(int32_t)));
-        if (keys == 0) { pIMem->pVTbl->Free(pIMem, ranks); printf("ОШИБКА: выделение памяти\n"); goto Release; }
+        if (keys == 0) { pIMem->pVTbl->Free(pIMem, ranks); printf("ERROR: memory allocation failed\n"); goto Release; }
         for (i = 0; i < n; ++i) keys[i] = (int32_t)((ranks[i] << 16) | (i & 0xFFFF));
 
         pIMem->pVTbl->Free(pIMem, ranks);
@@ -523,10 +523,10 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         elapsed = (double)(t1 - t0) / (double)CLOCKS_PER_SEC;
 
         if (result != 0) {
-            printf("ТЕСТ double: csort вернул ошибку %d\n", result);
+            printf("TEST double: csort returned error %d\n", result);
         } else {
             out_sorted = (double*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(double)));
-            if (out_sorted == 0) { printf("ОШИБКА: выделение памяти\n"); goto Release; }
+            if (out_sorted == 0) { printf("ERROR: memory allocation failed\n"); goto Release; }
             for (i = 0; i < n; ++i) {
                 uint32_t idx = (uint32_t)keys[i] & 0xFFFF;
                 out_sorted[i] = src[idx];
@@ -535,9 +535,9 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
             for (i = 1; i < n; ++i) {
                 if (out_sorted[i-1] > out_sorted[i]) { ok = 0; break; }
             }
-            printf("ТЕСТ double: результат:\n");
+            printf("TEST double: result:\n");
             printDoubleArr(out_sorted, n);
-            printf("ТЕСТ double: %s (время = %.6f с)\n\n", ok ? "PASS" : "FAIL", elapsed);
+            printf("TEST double: %s (time = %.6f s)\n\n", ok ? "PASS" : "FAIL", elapsed);
             pIMem->pVTbl->Free(pIMem, out_sorted);
         }
 
@@ -559,15 +559,15 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
 
         src = (char**)initStringArr(pIMem, n);
 
-        printf("ТЕСТ строк: исходный массив (n=%u):\n", (unsigned) n);
+        printf("TEST string: source array (n=%u):\n", (unsigned) n);
         printStringArr(src, n);
 
         ranks = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(int32_t)));
-        if (ranks == 0) { printf("ОШИБКА: выделение памяти\n"); goto Release; }
-        if (computeRanksString(pIMem, src, n, ranks) != 0) { printf("ОШИБКА: computeRanksString\n"); goto Release; }
+        if (ranks == 0) { printf("ERROR: memory allocation failed\n"); goto Release; }
+        if (computeRanksString(pIMem, src, n, ranks) != 0) { printf("ERROR: computeRanksString\n"); goto Release; }
 
         keys = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(int32_t)));
-        if (keys == 0) { pIMem->pVTbl->Free(pIMem, ranks); printf("ОШИБКА: выделение памяти\n"); goto Release; }
+        if (keys == 0) { pIMem->pVTbl->Free(pIMem, ranks); printf("ERROR: memory allocation failed\n"); goto Release; }
         for (i = 0; i < n; ++i) keys[i] = (int32_t)((ranks[i] << 16) | (i & 0xFFFF));
 
         pIMem->pVTbl->Free(pIMem, ranks);
@@ -578,10 +578,10 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         elapsed = (double)(t1 - t0) / (double)CLOCKS_PER_SEC;
 
         if (result != 0) {
-            printf("ТЕСТ строк: csort вернул ошибку %d\n", result);
+            printf("TEST string: csort returned error %d\n", result);
         } else {
             out_sorted = (char**)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(char*)));
-            if (out_sorted == 0) { printf("ОШИБКА: выделение памяти\n"); goto Release; }
+            if (out_sorted == 0) { printf("ERROR: memory allocation failed\n"); goto Release; }
             for (i = 0; i < n; ++i) {
                 uint32_t idx = (uint32_t)keys[i] & 0xFFFF;
                 out_sorted[i] = src[idx];
@@ -590,9 +590,9 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
             for (i = 1; i < n; ++i) {
                 if (strcmp(out_sorted[i-1], out_sorted[i]) > 0) { ok = 0; break; }
             }
-            printf("ТЕСТ строк: результат:\n");
+            printf("TEST string: result:\n");
             printStringArr(out_sorted, n);
-            printf("ТЕСТ строк: %s (время = %.6f с)\n\n", ok ? "PASS" : "FAIL", elapsed);
+            printf("TEST string: %s (time = %.6f s)\n\n", ok ? "PASS" : "FAIL", elapsed);
             pIMem->pVTbl->Free(pIMem, out_sorted);
         }
 

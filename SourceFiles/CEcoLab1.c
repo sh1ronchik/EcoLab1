@@ -137,11 +137,6 @@ int16_t ECOCALLMETHOD CEcoLab1_csort(/* in */ struct IEcoLab1* me, void *arrPrt,
         return -1;
     }
 
-    /* Поддерживаем только int32_t элементы */
-    if (elemSize != sizeof(int32_t)) {
-        return -1;
-    }
-
     pIMem = pCMe->m_pIMem;
     if (pIMem == 0) {
         return -1;
