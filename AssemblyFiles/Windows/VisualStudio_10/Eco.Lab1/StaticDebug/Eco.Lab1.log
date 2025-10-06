@@ -1,14 +1,10 @@
-﻿Build started 05.10.2025 14:43:22.
-     1>Project "C:\HSE\Eco.Lab1\AssemblyFiles\Windows\VisualStudio_10\Eco.Lab1.vcxproj" on node 2 (rebuild target(s)).
-     1>_PrepareForClean:
-         Deleting file "Eco.Lab1\StaticDebug\Eco.Lab1.lastbuildstate".
-       InitializeBuildStatus:
-         Creating "Eco.Lab1\StaticDebug\Eco.Lab1.unsuccessfulbuild" because "AlwaysCreate" was specified.
+﻿Build started 06.10.2025 21:39:24.
+     1>Project "C:\HSE\Eco.Lab1\AssemblyFiles\Windows\VisualStudio_10\Eco.Lab1.vcxproj" on node 2 (build target(s)).
+     1>InitializeBuildStatus:
+         Touching "Eco.Lab1\StaticDebug\Eco.Lab1.unsuccessfulbuild".
        ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I..\..\..\HeaderFiles /I..\..\..\SharedFiles /IC:\HSE\Eco.Framework\Eco.Core1\SharedFiles /IC:\HSE\Eco.Framework\Eco.InterfaceBus1\SharedFiles /IC:\HSE\Eco.Framework\Eco.System1\SharedFiles /IC:\HSE\Eco.Framework\Eco.MemoryManager1\SharedFiles /IC:\HSE\Eco.Framework\Eco.FileSystemManagement1\SharedFiles /IC:\HSE\Eco.Framework\Eco.List1\SharedFiles /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D ECO_WINDOWS /D ECO_WIN32 /D ECO_X86_32 /D UGUID_UTILITY /D ECO_LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Eco.Lab1\StaticDebug\\" /Fd"Eco.Lab1\StaticDebug\vc100.pdb" /Gz /TC /analyze- /errorReport:prompt ..\..\..\SourceFiles\CEcoLab1.c ..\..\..\SourceFiles\CEcoLab1Factory.c
-         CEcoLab1Factory.c
+         C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I..\..\..\HeaderFiles /I..\..\..\SharedFiles /IC:\HSE\Eco.Framework\Eco.Core1\SharedFiles /IC:\HSE\Eco.Framework\Eco.InterfaceBus1\SharedFiles /IC:\HSE\Eco.Framework\Eco.System1\SharedFiles /IC:\HSE\Eco.Framework\Eco.MemoryManager1\SharedFiles /IC:\HSE\Eco.Framework\Eco.FileSystemManagement1\SharedFiles /IC:\HSE\Eco.Framework\Eco.List1\SharedFiles /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D ECO_WINDOWS /D ECO_WIN32 /D ECO_X86_32 /D UGUID_UTILITY /D ECO_LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Eco.Lab1\StaticDebug\\" /Fd"Eco.Lab1\StaticDebug\vc100.pdb" /Gz /TC /analyze- /errorReport:prompt ..\..\..\SourceFiles\CEcoLab1.c
          CEcoLab1.c
-         Generating Code...
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\Microsoft.CppBuild.targets(1151,5): warning MSB8012: TargetPath(C:\HSE\Eco.Lab1\AssemblyFiles\Windows\VisualStudio_10\Eco.Lab1\StaticDebug\1F5DF16EE1BF43B999A434ED38FE8F3A.lib) does not match the Library's OutputFile property value (C:\HSE\Eco.Lab1\BuildFiles\Windows\x86\StaticDebug\1F5DF16EE1BF43B999A434ED38FE8F3A.lib). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Lib.OutputFile).
        Lib:
          C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\Lib.exe /OUT:"..\..\..\BuildFiles\Windows\x86\StaticDebug\1F5DF16EE1BF43B999A434ED38FE8F3A.lib" /NOLOGO Eco.Lab1\StaticDebug\CEcoLab1.obj
@@ -17,8 +13,8 @@
        FinalizeBuildStatus:
          Deleting file "Eco.Lab1\StaticDebug\Eco.Lab1.unsuccessfulbuild".
          Touching "Eco.Lab1\StaticDebug\Eco.Lab1.lastbuildstate".
-     1>Done Building Project "C:\HSE\Eco.Lab1\AssemblyFiles\Windows\VisualStudio_10\Eco.Lab1.vcxproj" (rebuild target(s)).
+     1>Done Building Project "C:\HSE\Eco.Lab1\AssemblyFiles\Windows\VisualStudio_10\Eco.Lab1.vcxproj" (build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:00.65
+Time Elapsed 00:00:00.45

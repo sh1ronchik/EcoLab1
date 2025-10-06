@@ -157,115 +157,6 @@ void *initStringArr(IEcoMemoryAllocator1 *pIMem, size_t size) {
 /*
  *
  * <сводка>
- *   Вычисление рангов для массива float
- * </сводка>
- *
- * <описание>
- *   Для каждого элемента arr[i] вычисляет его ранг в упорядоченном наборе (0..n-1).
- *   Ранжирование стабильное: при равных значениях порядок определяется меньшим индексом.
- * </описание>
- *
- */
-int computeRanksFloat(IEcoMemoryAllocator1 *pIMem, float *arr, size_t n, int32_t *ranks) {
-    int32_t *idx = 0;
-    size_t i, j;
-    if (n == 0) return -1;
-    idx = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(int32_t)));
-    if (idx == 0) return -1;
-    for (i = 0; i < n; ++i) idx[i] = (int32_t)i;
-    /* Стабильная сортировка индексов вставками по значению arr[idx[..]] */
-    for (i = 1; i < n; ++i) {
-        int32_t key = idx[i];
-        j = i;
-        while (j > 0 && (arr[(size_t)idx[j-1]] > arr[(size_t)key] ||
-               (arr[(size_t)idx[j-1]] == arr[(size_t)key] && idx[j-1] > key))) {
-            idx[j] = idx[j-1];
-            --j;
-        }
-        idx[j] = key;
-    }
-    for (i = 0; i < n; ++i) {
-        ranks[(size_t)idx[i]] = (int32_t)i;
-    }
-    pIMem->pVTbl->Free(pIMem, idx);
-    return 0;
-}
-
-/*
- *
- * <сводка>
- *   Вычисление рангов для массива double
- * </сводка>
- *
- * <описание>
- *   Аналогично computeRanksFloat, но для double.
- * </описание>
- *
- */
-int computeRanksDouble(IEcoMemoryAllocator1 *pIMem, double *arr, size_t n, int32_t *ranks) {
-    int32_t *idx = 0;
-    size_t i, j;
-    if (n == 0) return -1;
-    idx = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(int32_t)));
-    if (idx == 0) return -1;
-    for (i = 0; i < n; ++i) idx[i] = (int32_t)i;
-    for (i = 1; i < n; ++i) {
-        int32_t key = idx[i];
-        j = i;
-        while (j > 0 && (arr[(size_t)idx[j-1]] > arr[(size_t)key] ||
-               (arr[(size_t)idx[j-1]] == arr[(size_t)key] && idx[j-1] > key))) {
-            idx[j] = idx[j-1];
-            --j;
-        }
-        idx[j] = key;
-    }
-    for (i = 0; i < n; ++i) {
-        ranks[(size_t)idx[i]] = (int32_t)i;
-    }
-    pIMem->pVTbl->Free(pIMem, idx);
-    return 0;
-}
-
-/*
- *
- * <сводка>
- *   Вычисление рангов для массива строк (лексикографически)
- * </сводка>
- *
- * <описание>
- *   Стабильное ранжирование строк. Используется strcmp из рантайма.
- * </описание>
- *
- */
-int computeRanksString(IEcoMemoryAllocator1 *pIMem, char **arr, size_t n, int32_t *ranks) {
-    int32_t *idx = 0;
-    size_t i, j;
-    if (n == 0) return -1;
-    idx = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(int32_t)));
-    if (idx == 0) return -1;
-    for (i = 0; i < n; ++i) idx[i] = (int32_t)i;
-    for (i = 1; i < n; ++i) {
-        int32_t key = idx[i];
-        j = i;
-        while (j > 0) {
-            int cmp = strcmp(arr[idx[j-1]], arr[key]);
-            if (cmp > 0 || (cmp == 0 && idx[j-1] > key)) {
-                idx[j] = idx[j-1];
-                --j;
-            } else break;
-        }
-        idx[j] = key;
-    }
-    for (i = 0; i < n; ++i) {
-        ranks[(size_t)idx[i]] = (int32_t)i;
-    }
-    pIMem->pVTbl->Free(pIMem, idx);
-    return 0;
-}
-
-/*
- *
- * <сводка>
  *   Вспомогательные функции для вывода массивов
  * </сводка>
  *
@@ -365,12 +256,10 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         goto Release;
     }
 
-    /* ---------- ТЕСТ 1: int32_t (n = 50) ---------- */
+    /* ---------- TEST 1: int32_t ---------- */
     {
         int32_t *src = 0;
-        size_t n = 50;
-        int32_t *keys = 0;
-        int32_t *out_sorted = 0;
+        size_t n = 500000;
         size_t i;
         int ok;
         clock_t t0, t1;
@@ -382,64 +271,30 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         printf("TEST INT: source array (n=%u):\n", (unsigned) n);
         printIntArr(src, n);
 
-        /* Для int просто сформируем ранги по значению (вместо масштабирования) */
-        {
-            int32_t *ranks = 0;
-            ranks = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(int32_t)));
-            if (ranks == 0) { printf("ERROR: memory allocation failed\n"); goto Release; }
-            for (i = 0; i < n; ++i) ranks[i] = 0;
-            for (i = 0; i < n; ++i) {
-                size_t j;
-                for (j = 0; j < n; ++j) {
-                    if (src[j] < src[i] || (src[j] == src[i] && (int32_t)j < (int32_t)i)) {
-                        ranks[i]++;
-                    }
-                }
-            }
-            keys = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(int32_t)));
-            if (keys == 0) { pIMem->pVTbl->Free(pIMem, ranks); printf("ERROR: memory allocation failed\n"); goto Release; }
-            for (i = 0; i < n; ++i) {
-                keys[i] = (int32_t)((ranks[i] << 16) | (i & 0xFFFF));
-            }
-            pIMem->pVTbl->Free(pIMem, ranks);
-        }
-
-        /* call csort and measure time */
         t0 = clock();
-        result = pIEcoLab1->pVTbl->csort(pIEcoLab1, keys, n, sizeof(int32_t));
+        result = pIEcoLab1->pVTbl->csortInt(pIEcoLab1, src, n);
         t1 = clock();
         elapsed = (double)(t1 - t0) / (double)CLOCKS_PER_SEC;
 
         if (result != 0) {
-            printf("TEST INT: csort returned error %d\n", result);
+            printf("TEST INT: csortInt returned error %d\n", result);
         } else {
-            out_sorted = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(int32_t)));
-            if (out_sorted == 0) { printf("ERROR: memory allocation failed\n"); goto Release; }
-            for (i = 0; i < n; ++i) {
-                uint32_t idx = (uint32_t)keys[i] & 0xFFFF;
-                out_sorted[i] = src[idx];
-            }
             ok = 1;
             for (i = 1; i < n; ++i) {
-                if (out_sorted[i-1] > out_sorted[i]) { ok = 0; break; }
+                if (src[i-1] > src[i]) { ok = 0; break; }
             }
             printf("TEST INT: result:\n");
-            printIntArr(out_sorted, n);
+            printIntArr(src, n);
             printf("TEST INT: %s (time = %.6f s)\n\n", ok ? "PASS" : "FAIL", elapsed);
-            pIMem->pVTbl->Free(pIMem, out_sorted);
         }
 
-        pIMem->pVTbl->Free(pIMem, keys);
         pIMem->pVTbl->Free(pIMem, src);
     }
 
-    /* ---------- ТЕСТ 2: float (n = 50) ---------- */
+    /* ---------- TEST 2: float ---------- */
     {
         float *src = 0;
-        size_t n = 50;
-        int32_t *ranks = 0;
-        int32_t *keys = 0;
-        float *out_sorted = 0;
+        size_t n = 500000;
         size_t i;
         int ok;
         clock_t t0, t1;
@@ -451,51 +306,30 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         printf("TEST float: source array (n=%u):\n", (unsigned) n);
         printFloatArr(src, n);
 
-        ranks = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(int32_t)));
-        if (ranks == 0) { printf("ERROR: memory allocation failed\n"); goto Release; }
-        if (computeRanksFloat(pIMem, src, n, ranks) != 0) { printf("ERROR: computeRanksFloat\n"); goto Release; }
-
-        keys = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(int32_t)));
-        if (keys == 0) { pIMem->pVTbl->Free(pIMem, ranks); printf("ERROR: memory allocation failed\n"); goto Release; }
-        for (i = 0; i < n; ++i) keys[i] = (int32_t)((ranks[i] << 16) | (i & 0xFFFF));
-
-        pIMem->pVTbl->Free(pIMem, ranks);
-
         t0 = clock();
-        result = pIEcoLab1->pVTbl->csort(pIEcoLab1, keys, n, sizeof(int32_t));
+        result = pIEcoLab1->pVTbl->csortFloat(pIEcoLab1, src, n);
         t1 = clock();
         elapsed = (double)(t1 - t0) / (double)CLOCKS_PER_SEC;
 
         if (result != 0) {
-            printf("TEST float: csort returned error %d\n", result);
+            printf("TEST float: csortFloat returned error %d\n", result);
         } else {
-            out_sorted = (float*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(float)));
-            if (out_sorted == 0) { printf("ERROR: memory allocation failed\n"); goto Release; }
-            for (i = 0; i < n; ++i) {
-                uint32_t idx = (uint32_t)keys[i] & 0xFFFF;
-                out_sorted[i] = src[idx];
-            }
             ok = 1;
             for (i = 1; i < n; ++i) {
-                if (out_sorted[i-1] > out_sorted[i]) { ok = 0; break; }
+                if (src[i-1] > src[i]) { ok = 0; break; }
             }
             printf("TEST float: result:\n");
-            printFloatArr(out_sorted, n);
+            printFloatArr(src, n);
             printf("TEST float: %s (time = %.6f s)\n\n", ok ? "PASS" : "FAIL", elapsed);
-            pIMem->pVTbl->Free(pIMem, out_sorted);
         }
 
-        pIMem->pVTbl->Free(pIMem, keys);
         pIMem->pVTbl->Free(pIMem, src);
     }
 
-    /* ---------- ТЕСТ 3: double (n = 50) ---------- */
+    /* ---------- TEST 3: double ---------- */
     {
         double *src = 0;
-        size_t n = 50;
-        int32_t *ranks = 0;
-        int32_t *keys = 0;
-        double *out_sorted = 0;
+        size_t n = 500000;
         size_t i;
         int ok;
         clock_t t0, t1;
@@ -507,99 +341,60 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         printf("TEST double: source array (n=%u):\n", (unsigned) n);
         printDoubleArr(src, n);
 
-        ranks = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(int32_t)));
-        if (ranks == 0) { printf("ERROR: memory allocation failed\n"); goto Release; }
-        if (computeRanksDouble(pIMem, src, n, ranks) != 0) { printf("ERROR: computeRanksDouble\n"); goto Release; }
-
-        keys = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(int32_t)));
-        if (keys == 0) { pIMem->pVTbl->Free(pIMem, ranks); printf("ERROR: memory allocation failed\n"); goto Release; }
-        for (i = 0; i < n; ++i) keys[i] = (int32_t)((ranks[i] << 16) | (i & 0xFFFF));
-
-        pIMem->pVTbl->Free(pIMem, ranks);
-
         t0 = clock();
-        result = pIEcoLab1->pVTbl->csort(pIEcoLab1, keys, n, sizeof(int32_t));
+        result = pIEcoLab1->pVTbl->csortDouble(pIEcoLab1, src, n);
         t1 = clock();
         elapsed = (double)(t1 - t0) / (double)CLOCKS_PER_SEC;
 
         if (result != 0) {
-            printf("TEST double: csort returned error %d\n", result);
+            printf("TEST double: csortDouble returned error %d\n", result);
         } else {
-            out_sorted = (double*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(double)));
-            if (out_sorted == 0) { printf("ERROR: memory allocation failed\n"); goto Release; }
-            for (i = 0; i < n; ++i) {
-                uint32_t idx = (uint32_t)keys[i] & 0xFFFF;
-                out_sorted[i] = src[idx];
-            }
             ok = 1;
             for (i = 1; i < n; ++i) {
-                if (out_sorted[i-1] > out_sorted[i]) { ok = 0; break; }
+                if (src[i-1] > src[i]) { ok = 0; break; }
             }
             printf("TEST double: result:\n");
-            printDoubleArr(out_sorted, n);
+            printDoubleArr(src, n);
             printf("TEST double: %s (time = %.6f s)\n\n", ok ? "PASS" : "FAIL", elapsed);
-            pIMem->pVTbl->Free(pIMem, out_sorted);
         }
 
-        pIMem->pVTbl->Free(pIMem, keys);
         pIMem->pVTbl->Free(pIMem, src);
     }
 
-    /* ---------- ТЕСТ 4: string (n = 50) ---------- */
+    /* ---------- TEST 4: string ---------- */
     {
         char **src = 0;
-        size_t n = 50;
-        int32_t *ranks = 0;
-        int32_t *keys = 0;
-        char **out_sorted = 0;
+        size_t n = 500000;
         size_t i;
         int ok;
         clock_t t0, t1;
         double elapsed;
 
         src = (char**)initStringArr(pIMem, n);
+        if (src == 0) { printf("ERROR: initStringArr failed\n"); goto Release; }
 
         printf("TEST string: source array (n=%u):\n", (unsigned) n);
         printStringArr(src, n);
 
-        ranks = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(int32_t)));
-        if (ranks == 0) { printf("ERROR: memory allocation failed\n"); goto Release; }
-        if (computeRanksString(pIMem, src, n, ranks) != 0) { printf("ERROR: computeRanksString\n"); goto Release; }
-
-        keys = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(int32_t)));
-        if (keys == 0) { pIMem->pVTbl->Free(pIMem, ranks); printf("ERROR: memory allocation failed\n"); goto Release; }
-        for (i = 0; i < n; ++i) keys[i] = (int32_t)((ranks[i] << 16) | (i & 0xFFFF));
-
-        pIMem->pVTbl->Free(pIMem, ranks);
-
         t0 = clock();
-        result = pIEcoLab1->pVTbl->csort(pIEcoLab1, keys, n, sizeof(int32_t));
+        result = pIEcoLab1->pVTbl->csortString(pIEcoLab1, src, n);
         t1 = clock();
         elapsed = (double)(t1 - t0) / (double)CLOCKS_PER_SEC;
 
         if (result != 0) {
-            printf("TEST string: csort returned error %d\n", result);
+            printf("TEST string: csortString returned error %d\n", result);
         } else {
-            out_sorted = (char**)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(char*)));
-            if (out_sorted == 0) { printf("ERROR: memory allocation failed\n"); goto Release; }
-            for (i = 0; i < n; ++i) {
-                uint32_t idx = (uint32_t)keys[i] & 0xFFFF;
-                out_sorted[i] = src[idx];
-            }
             ok = 1;
             for (i = 1; i < n; ++i) {
-                if (strcmp(out_sorted[i-1], out_sorted[i]) > 0) { ok = 0; break; }
+                if (strcmp(src[i-1], src[i]) > 0) { ok = 0; break; }
             }
             printf("TEST string: result:\n");
-            printStringArr(out_sorted, n);
+            printStringArr(src, n);
             printf("TEST string: %s (time = %.6f s)\n\n", ok ? "PASS" : "FAIL", elapsed);
-            pIMem->pVTbl->Free(pIMem, out_sorted);
         }
 
-        /* Освобождение памяти */
         for (i = 0; i < n; ++i) pIMem->pVTbl->Free(pIMem, src[i]);
         pIMem->pVTbl->Free(pIMem, src);
-        pIMem->pVTbl->Free(pIMem, keys);
     }
 
 Release:

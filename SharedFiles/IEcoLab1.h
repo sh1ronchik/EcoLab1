@@ -43,6 +43,11 @@ typedef struct IEcoLab1VTbl {
     /* IEcoLab1 */
     int16_t (ECOCALLMETHOD *csort)(/* in */ IEcoLab1Ptr_t me, /* in */ void *arrPrt, /* in */ size_t arrSize, /* in */ size_t elemSize);
 
+    int16_t (ECOCALLMETHOD *csortInt)(/* in */ IEcoLab1Ptr_t me, /* in */ int32_t *arr, /* in */ size_t arrSize);
+    int16_t (ECOCALLMETHOD *csortFloat)(/* in */ IEcoLab1Ptr_t me, /* in */ float *arr, /* in */ size_t arrSize);
+    int16_t (ECOCALLMETHOD *csortDouble)(/* in */ IEcoLab1Ptr_t me, /* in */ double *arr, /* in */ size_t arrSize);
+    int16_t (ECOCALLMETHOD *csortString)(/* in */ IEcoLab1Ptr_t me, /* in */ char **arr, /* in */ size_t arrSize);
+
 } IEcoLab1VTbl, *IEcoLab1VTblPtr;
 
 interface IEcoLab1 {

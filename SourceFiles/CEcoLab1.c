@@ -109,31 +109,26 @@ static uint32_t ECOCALLMETHOD CEcoLab1_Release(/* in */ IEcoLab1Ptr_t me) {
     return pCMe->m_cRef;
 }
 
-/*
- *
- * <сводка>
- *   Функция csort - реализация сортировки подсчётом
- * </сводка>
- *
- * <описание>
- *   Функция принимает строку с целыми числами (например: "3, -1 4 2")
- *   и возвращает через copyName новую строку с числами, отсортированными
- *   в порядке неубывания, разделёнными пробелом.
- *   Реализована поддержка отрицательных чисел (смещение по минимальному значению).
- * </описание>
- *
- */
-int16_t ECOCALLMETHOD CEcoLab1_csort(/* in */ struct IEcoLab1* me, void *arrPrt, size_t arrSize, size_t elemSize) {
+/* Прототипы (сигнатуры - как в заголовке IEcoLab1.h) */
+static int16_t ECOCALLMETHOD CEcoLab1_csort(/* in */ IEcoLab1Ptr_t me, void *arrPrt, size_t arrSize, size_t elemSize);
+static int16_t ECOCALLMETHOD CEcoLab1_csortInt(/* in */ IEcoLab1Ptr_t me, int32_t *arr, size_t arrSize);
+static int16_t ECOCALLMETHOD CEcoLab1_csortFloat(/* in */ IEcoLab1Ptr_t me, float *arr, size_t arrSize);
+static int16_t ECOCALLMETHOD CEcoLab1_csortDouble(/* in */ IEcoLab1Ptr_t me, double *arr, size_t arrSize);
+static int16_t ECOCALLMETHOD CEcoLab1_csortString(/* in */ IEcoLab1Ptr_t me, char **arr, size_t arrSize);
+
+/* Реализация сортировок */
+
+/* Counting sort для int32_t (устойчивая) */
+static int16_t ECOCALLMETHOD CEcoLab1_csortInt(/* in */ IEcoLab1Ptr_t me, int32_t *arr, size_t arrSize) {
     CEcoLab1* pCMe = (CEcoLab1*)me;
-    IEcoMemoryAllocator1* pIMem = 0;
-    int32_t *arr = 0;
-    int32_t *outArr = 0;
+    IEcoMemoryAllocator1* pIMem;
+    int32_t *outArr;
     size_t i, idx;
     int32_t minv = 0, maxv = 0;
     unsigned long range = 0;
-    uint32_t *counts = 0;
+    uint32_t *counts;
 
-    if (me == 0 || arrPrt == 0) {
+    if (me == 0 || arr == 0) {
         return -1;
     }
 
@@ -145,8 +140,6 @@ int16_t ECOCALLMETHOD CEcoLab1_csort(/* in */ struct IEcoLab1* me, void *arrPrt,
     if (arrSize == 0) {
         return 0;
     }
-
-    arr = (int32_t*)arrPrt;
 
     /* Найдём min и max */
     minv = maxv = arr[0];
@@ -161,7 +154,7 @@ int16_t ECOCALLMETHOD CEcoLab1_csort(/* in */ struct IEcoLab1* me, void *arrPrt,
         return -1;
     }
 
-    /* Выделим массив */
+    /* Выделим массив counts */
     counts = (uint32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(range * sizeof(uint32_t)));
     if (counts == 0) {
         return -1;
@@ -174,7 +167,7 @@ int16_t ECOCALLMETHOD CEcoLab1_csort(/* in */ struct IEcoLab1* me, void *arrPrt,
     }
 
     /* Выделим временный буфер для отсортированного массива */
-    outArr = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(arrSize * elemSize));
+    outArr = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(arrSize * sizeof(int32_t)));
     if (outArr == 0) {
         pIMem->pVTbl->Free(pIMem, counts);
         return -1;
@@ -202,6 +195,190 @@ int16_t ECOCALLMETHOD CEcoLab1_csort(/* in */ struct IEcoLab1* me, void *arrPrt,
     pIMem->pVTbl->Free(pIMem, outArr);
 
     return 0;
+}
+
+/* Stable iterative merge (bottom-up) для float */
+static int16_t ECOCALLMETHOD CEcoLab1_csortFloat(/* in */ IEcoLab1Ptr_t me, float *arr, size_t arrSize) {
+    CEcoLab1* pCMe = (CEcoLab1*)me;
+    IEcoMemoryAllocator1* pIMem;
+    float *buf;
+    float *src;
+    float *dst;
+    size_t width, i, left, mid, right, k, a, b, j;
+    int swapped = 0;
+
+    if (me == 0 || arr == 0) return -1;
+
+    pIMem = pCMe->m_pIMem;
+    if (pIMem == 0) return -1;
+
+    if (arrSize == 0) return 0;
+
+    buf = (float*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(arrSize * sizeof(float)));
+    if (buf == 0) return -1;
+
+    src = arr;
+    dst = buf;
+
+    for (width = 1; width < arrSize; width <<= 1) {
+        for (i = 0; i < arrSize; i += 2 * width) {
+            left = i;
+            mid = (i + width < arrSize) ? (i + width) : arrSize;
+            right = (i + 2 * width < arrSize) ? (i + 2 * width) : arrSize;
+            k = left;
+            a = left; b = mid;
+            while (a < mid && b < right) {
+                if (src[a] < src[b] || (src[a] == src[b] && a <= b)) {
+                    dst[k++] = src[a++];
+                } else {
+                    dst[k++] = src[b++];
+                }
+            }
+            while (a < mid) dst[k++] = src[a++];
+            while (b < right) dst[k++] = src[b++];
+        }
+        /* swap */
+        {
+            float *tmp = src; src = dst; dst = tmp;
+            swapped = !swapped;
+        }
+    }
+
+    if (swapped) {
+        for (j = 0; j < arrSize; ++j) arr[j] = src[j];
+    }
+
+    pIMem->pVTbl->Free(pIMem, buf);
+    return 0;
+}
+
+/* Stable iterative merge (bottom-up) для double */
+static int16_t ECOCALLMETHOD CEcoLab1_csortDouble(/* in */ IEcoLab1Ptr_t me, double *arr, size_t arrSize) {
+    CEcoLab1* pCMe = (CEcoLab1*)me;
+    IEcoMemoryAllocator1* pIMem;
+    double *buf;
+    double *src;
+    double *dst;
+    size_t width, i, left, mid, right, k, a, b, j;
+    int swapped = 0;
+
+    if (me == 0 || arr == 0) return -1;
+
+    pIMem = pCMe->m_pIMem;
+    if (pIMem == 0) return -1;
+
+    if (arrSize == 0) return 0;
+
+    buf = (double*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(arrSize * sizeof(double)));
+    if (buf == 0) return -1;
+
+    src = arr;
+    dst = buf;
+
+    for (width = 1; width < arrSize; width <<= 1) {
+        for (i = 0; i < arrSize; i += 2 * width) {
+            left = i;
+            mid = (i + width < arrSize) ? (i + width) : arrSize;
+            right = (i + 2 * width < arrSize) ? (i + 2 * width) : arrSize;
+            k = left;
+            a = left; b = mid;
+            while (a < mid && b < right) {
+                if (src[a] < src[b] || (src[a] == src[b] && a <= b)) {
+                    dst[k++] = src[a++];
+                } else {
+                    dst[k++] = src[b++];
+                }
+            }
+            while (a < mid) dst[k++] = src[a++];
+            while (b < right) dst[k++] = src[b++];
+        }
+        /* swap */
+        {
+            double *tmp = src; src = dst; dst = tmp;
+            swapped = !swapped;
+        }
+    }
+
+    if (swapped) {
+        for (j = 0; j < arrSize; ++j) arr[j] = src[j];
+    }
+
+    pIMem->pVTbl->Free(pIMem, buf);
+    return 0;
+}
+
+/* Stable iterative merge (bottom-up) для строк (char*) — лексикографически */
+static int16_t ECOCALLMETHOD CEcoLab1_csortString(/* in */ IEcoLab1Ptr_t me, char **arr, size_t arrSize) {
+    CEcoLab1* pCMe = (CEcoLab1*)me;
+    IEcoMemoryAllocator1* pIMem;
+    char **buf;
+    char **src;
+    char **dst;
+    size_t width, i, left, mid, right, k, a, b, j;
+    int swapped = 0;
+
+    if (me == 0 || arr == 0) return -1;
+
+    pIMem = pCMe->m_pIMem;
+    if (pIMem == 0) return -1;
+
+    if (arrSize == 0) return 0;
+
+    buf = (char**)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(arrSize * sizeof(char*)));
+    if (buf == 0) return -1;
+
+    src = arr;
+    dst = buf;
+
+    for (width = 1; width < arrSize; width <<= 1) {
+        for (i = 0; i < arrSize; i += 2 * width) {
+            left = i;
+            mid = (i + width < arrSize) ? (i + width) : arrSize;
+            right = (i + 2 * width < arrSize) ? (i + 2 * width) : arrSize;
+            k = left;
+            a = left; b = mid;
+            while (a < mid && b < right) {
+                int cmp = strcmp(src[a], src[b]);
+                if (cmp < 0 || (cmp == 0 && a <= b)) {
+                    dst[k++] = src[a++];
+                } else {
+                    dst[k++] = src[b++];
+                }
+            }
+            while (a < mid) dst[k++] = src[a++];
+            while (b < right) dst[k++] = src[b++];
+        }
+        /* swap */
+        {
+            char **tmp = src; src = dst; dst = tmp;
+            swapped = !swapped;
+        }
+    }
+
+    if (swapped) {
+        for (j = 0; j < arrSize; ++j) arr[j] = src[j];
+    }
+
+    pIMem->pVTbl->Free(pIMem, buf);
+    return 0;
+}
+
+/* Обёртка: прежняя сигнатура остаётся — диспетчер по elemSize */
+int16_t ECOCALLMETHOD CEcoLab1_csort(/* in */ IEcoLab1Ptr_t me, void *arrPrt, size_t arrSize, size_t elemSize) {
+    if (me == 0 || arrPrt == 0) return -1;
+    if (arrSize == 0) return 0;
+
+    if (elemSize == sizeof(int32_t)) {
+        return CEcoLab1_csortInt(me, (int32_t*)arrPrt, arrSize);
+    } else if (elemSize == sizeof(float)) {
+        return CEcoLab1_csortFloat(me, (float*)arrPrt, arrSize);
+    } else if (elemSize == sizeof(double)) {
+        return CEcoLab1_csortDouble(me, (double*)arrPrt, arrSize);
+    } else if (elemSize == sizeof(char*)) {
+        return CEcoLab1_csortString(me, (char**)arrPrt, arrSize);
+    } else {
+        return -1;
+    }
 }
 
 
@@ -253,7 +430,11 @@ IEcoLab1VTbl g_x277FC00C35624096AFCFC125B94EEC90VTbl = {
     CEcoLab1_QueryInterface,
     CEcoLab1_AddRef,
     CEcoLab1_Release,
-    CEcoLab1_csort
+    CEcoLab1_csort,        /* общий (совместимость) */
+    CEcoLab1_csortInt,     /* специализированный для int32_t */
+    CEcoLab1_csortFloat,   /* специализированный для float */
+    CEcoLab1_csortDouble,  /* специализированный для double */
+    CEcoLab1_csortString   /* специализированный для char* (строки) */
 };
 
 /*
