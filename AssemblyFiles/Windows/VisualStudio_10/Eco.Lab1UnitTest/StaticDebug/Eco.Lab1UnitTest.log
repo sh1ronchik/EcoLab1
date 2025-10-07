@@ -1,7 +1,7 @@
-﻿Build started 06.10.2025 22:04:32.
+﻿Build started 07.10.2025 9:33:31.
      1>Project "C:\HSE\Eco.Lab1\AssemblyFiles\Windows\VisualStudio_10\Eco.Lab1UnitTest.vcxproj" on node 2 (build target(s)).
      1>InitializeBuildStatus:
-         Creating "Eco.Lab1UnitTest\StaticDebug\Eco.Lab1UnitTest.unsuccessfulbuild" because "AlwaysCreate" was specified.
+         Touching "Eco.Lab1UnitTest\StaticDebug\Eco.Lab1UnitTest.unsuccessfulbuild".
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I..\..\..\SharedFiles /I..\..\..\HeaderFiles /IC:\HSE\Eco.Framework\Eco.Core1\SharedFiles /IC:\HSE\Eco.Framework\Eco.InterfaceBus1\SharedFiles /IC:\HSE\Eco.Framework\Eco.System1\SharedFiles /IC:\HSE\Eco.Framework\Eco.MemoryManager1\SharedFiles /IC:\HSE\Eco.Framework\Eco.FileSystemManagement1\SharedFiles /IC:\HSE\Eco.Framework\Eco.List1\SharedFiles /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D UGUID_UTILITY /D ECO_X86_32 /D ECO_WINDOWS /D ECO_WIN32 /D ECO_LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Eco.Lab1UnitTest\StaticDebug\\" /Fd"Eco.Lab1UnitTest\StaticDebug\vc100.pdb" /Gz /TC /analyze- /errorReport:prompt ..\..\..\UnitTestFiles\SourceFiles\EcoLab1.c
          EcoLab1.c
@@ -36,4 +36,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:25.21
+Time Elapsed 00:00:40.24
