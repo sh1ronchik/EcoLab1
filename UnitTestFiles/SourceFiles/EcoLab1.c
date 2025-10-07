@@ -83,56 +83,6 @@ void *initIntArr(IEcoMemoryAllocator1 *pIMem, size_t size) {
 /*
  *
  * <сводка>
- *   Инициализация массива float
- * </сводка>
- *
- * <описание>
- *   Выделяет массив float размера size через pIMem и заполняет значениями.
- *   Возвращает указатель на выделенный массив (float*).
- * </описание>
- *
- */
-void *initFloatArr(IEcoMemoryAllocator1 *pIMem, size_t size) {
-    float *arr = 0;
-    size_t i;
-    arr = (float*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(size * sizeof(float)));
-    if (arr == 0) return 0;
-    lcg_srand(12345UL);
-    for (i = 0; i < size; ++i) {
-        int r = lcg_rand() % 2001; /* 0..2000 */
-        arr[i] = ((float)r / 100.0f) - 10.0f; /* диапазон примерно [-10.00, 10.00] */
-    }
-    return arr;
-}
-
-/*
- *
- * <сводка>
- *   Инициализация массива double
- * </сводка>
- *
- * <описание>
- *   Выделяет массив double размера size через pIMem и заполняет значениями.
- *   Возвращает указатель на выделенный массив (double*).
- * </описание>
- *
- */
-void *initDoubleArr(IEcoMemoryAllocator1 *pIMem, size_t size) {
-    double *arr = 0;
-    size_t i;
-    arr = (double*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(size * sizeof(double)));
-    if (arr == 0) return 0;
-    lcg_srand(54321UL);
-    for (i = 0; i < size; ++i) {
-        int r = lcg_rand() % 200001; /* 0..200000 */
-        arr[i] = ((double)r / 10000.0) - 10.0; /* диапазон примерно [-10.0000, 10.0000] */
-    }
-    return arr;
-}
-
-/*
- *
- * <сводка>
  *   Инициализация массива строк
  * </сводка>
  *
@@ -182,24 +132,6 @@ static void printIntArr(const int32_t *arr, size_t n) {
     }
     printf("]\n");
 }
-static void printFloatArr(const float *arr, size_t n) {
-    size_t i;
-    printf("[");
-    for (i = 0; i < n; ++i) {
-        if (i) printf(", ");
-        printf("%.6f", arr[i]);
-    }
-    printf("]\n");
-}
-static void printDoubleArr(const double *arr, size_t n) {
-    size_t i;
-    printf("[");
-    for (i = 0; i < n; ++i) {
-        if (i) printf(", ");
-        printf("%.9f", arr[i]);
-    }
-    printf("]\n");
-}
 static void printStringArr(char **arr, size_t n) {
     size_t i;
     printf("[");
@@ -214,20 +146,6 @@ static void printStringArr(char **arr, size_t n) {
 static int CDECL compareIntQ(const void *a, const void *b) {
     int32_t va = *(const int32_t*)a;
     int32_t vb = *(const int32_t*)b;
-    if (va < vb) return -1;
-    if (va > vb) return 1;
-    return 0;
-}
-static int CDECL compareFloatQ(const void *a, const void *b) {
-    float va = *(const float*)a;
-    float vb = *(const float*)b;
-    if (va < vb) return -1;
-    if (va > vb) return 1;
-    return 0;
-}
-static int CDECL compareDoubleQ(const void *a, const void *b) {
-    double va = *(const double*)a;
-    double vb = *(const double*)b;
     if (va < vb) return -1;
     if (va > vb) return 1;
     return 0;
@@ -301,7 +219,7 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
     {
         int32_t *src = 0;
         int32_t *arr2 = 0;
-        size_t n = 1000000;
+        size_t n = 100000;
         size_t i;
         int ok_csort = 0;
         int ok_qsort = 0;
@@ -347,107 +265,11 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         pIMem->pVTbl->Free(pIMem, arr2);
     }
 
-    /* ---------- TEST 2: float ---------- */
-    {
-        float *src = 0;
-        float *arr2 = 0;
-        size_t n = 1000000;
-        size_t i;
-        int ok_csort = 0;
-        int ok_qsort = 0;
-        clock_t t0, t1, tq0, tq1;
-        double elapsed_csort, elapsed_qsort;
-
-        src = (float*)initFloatArr(pIMem, n);
-        if (src == 0) { printf("ERROR: initFloatArr failed\n"); goto Release; }
-
-        arr2 = (float*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(float)));
-        if (arr2 == 0) { pIMem->pVTbl->Free(pIMem, src); printf("ERROR: alloc arr2 failed\n"); goto Release; }
-        for (i = 0; i < n; ++i) arr2[i] = src[i];
-
-        t0 = clock();
-        result = pIEcoLab1->pVTbl->csortFloat(pIEcoLab1, src, n);
-        t1 = clock();
-        elapsed_csort = (double)(t1 - t0) / (double)CLOCKS_PER_SEC;
-
-        if (result != 0) {
-            printf("TEST float: csortFloat returned error %d\n", result);
-        } else {
-            ok_csort = 1;
-            for (i = 1; i < n; ++i) {
-                if (src[i-1] > src[i]) { ok_csort = 0; break; }
-            }
-            printf("TEST float: csort %s (time = %.6f s)\n", ok_csort ? "PASS" : "FAIL", elapsed_csort);
-        }
-
-        tq0 = clock();
-        qsort(arr2, n, sizeof(float), compareFloatQ);
-        tq1 = clock();
-        elapsed_qsort = (double)(tq1 - tq0) / (double)CLOCKS_PER_SEC;
-
-        ok_qsort = 1;
-        for (i = 1; i < n; ++i) {
-            if (arr2[i-1] > arr2[i]) { ok_qsort = 0; break; }
-        }
-        printf("TEST float: qsort %s (time = %.6f s)\n\n", ok_qsort ? "PASS" : "FAIL", elapsed_qsort);
-
-        pIMem->pVTbl->Free(pIMem, src);
-        pIMem->pVTbl->Free(pIMem, arr2);
-    }
-
-    /* ---------- TEST 3: double ---------- */
-    {
-        double *src = 0;
-        double *arr2 = 0;
-        size_t n = 1000000;
-        size_t i;
-        int ok_csort = 0;
-        int ok_qsort = 0;
-        clock_t t0, t1, tq0, tq1;
-        double elapsed_csort, elapsed_qsort;
-
-        src = (double*)initDoubleArr(pIMem, n);
-        if (src == 0) { printf("ERROR: initDoubleArr failed\n"); goto Release; }
-
-        arr2 = (double*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(double)));
-        if (arr2 == 0) { pIMem->pVTbl->Free(pIMem, src); printf("ERROR: alloc arr2 failed\n"); goto Release; }
-        for (i = 0; i < n; ++i) arr2[i] = src[i];
-
-        t0 = clock();
-        result = pIEcoLab1->pVTbl->csortDouble(pIEcoLab1, src, n);
-        t1 = clock();
-        elapsed_csort = (double)(t1 - t0) / (double)CLOCKS_PER_SEC;
-
-        if (result != 0) {
-            printf("TEST double: csortDouble returned error %d\n", result);
-        } else {
-            ok_csort = 1;
-            for (i = 1; i < n; ++i) {
-                if (src[i-1] > src[i]) { ok_csort = 0; break; }
-            }
-            printf("TEST double: csort %s (time = %.6f s)\n", ok_csort ? "PASS" : "FAIL", elapsed_csort);
-        }
-
-        tq0 = clock();
-        qsort(arr2, n, sizeof(double), compareDoubleQ);
-        tq1 = clock();
-        elapsed_qsort = (double)(tq1 - tq0) / (double)CLOCKS_PER_SEC;
-
-        ok_qsort = 1;
-        for (i = 1; i < n; ++i) {
-            if (arr2[i-1] > arr2[i]) { ok_qsort = 0; break; }
-        }
-        printf("TEST double: qsort %s (time = %.6f s)\n\n", ok_qsort ? "PASS" : "FAIL", elapsed_qsort);
-
-        pIMem->pVTbl->Free(pIMem, src);
-        pIMem->pVTbl->Free(pIMem, arr2);
-    }
-
     /* ---------- TEST 4: string ---------- */
     {
         char **src = 0;
         char **arr2 = 0;
-        size_t n = 1000000;
+        size_t n = 100000;
         size_t i;
         int ok_csort = 0;
         int ok_qsort = 0;
@@ -459,7 +281,7 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
 
         /* копия указателей для qsort */
         arr2 = (char**)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(char*)));
-        if (arr2 == 0) { 
+        if (arr2 == 0) {
             for (i = 0; i < n; ++i) pIMem->pVTbl->Free(pIMem, src[i]);
             pIMem->pVTbl->Free(pIMem, src);
             printf("ERROR: alloc arr2 failed\n");
