@@ -1,10 +1,14 @@
-﻿Build started 07.10.2025 17:33:29.
+﻿Build started 07.10.2025 18:13:37.
      1>Project "C:\HSE\Eco.Lab1\AssemblyFiles\Windows\VisualStudio_10\Eco.Lab1.vcxproj" on node 2 (build target(s)).
      1>InitializeBuildStatus:
-         Creating "Eco.Lab1\StaticDebug\Eco.Lab1.unsuccessfulbuild" because "AlwaysCreate" was specified.
+         Touching "Eco.Lab1\StaticDebug\Eco.Lab1.unsuccessfulbuild".
        ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I..\..\..\HeaderFiles /I..\..\..\SharedFiles /IC:\HSE\Eco.Framework\Eco.Core1\SharedFiles /IC:\HSE\Eco.Framework\Eco.InterfaceBus1\SharedFiles /IC:\HSE\Eco.Framework\Eco.System1\SharedFiles /IC:\HSE\Eco.Framework\Eco.MemoryManager1\SharedFiles /IC:\HSE\Eco.Framework\Eco.FileSystemManagement1\SharedFiles /IC:\HSE\Eco.Framework\Eco.List1\SharedFiles /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _WINDOWS /D ECO_WINDOWS /D ECO_WIN32 /D ECO_X86_32 /D UGUID_UTILITY /D ECO_LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Eco.Lab1\StaticDebug\\" /Fd"Eco.Lab1\StaticDebug\vc100.pdb" /Gz /TC /analyze- /errorReport:prompt ..\..\..\SourceFiles\CEcoLab1.c
          CEcoLab1.c
+     1>c:\hse\eco.lab1\sourcefiles\cecolab1.c(199): warning C4028: formal parameter 2 different from declaration
+     1>c:\hse\eco.lab1\sourcefiles\cecolab1.c(257): warning C4047: 'function' : 'char *' differs in levels of indirection from 'char **'
+     1>c:\hse\eco.lab1\sourcefiles\cecolab1.c(257): warning C4024: 'CEcoLab1_csortChar' : different types for formal and actual parameter 2
+     1>c:\hse\eco.lab1\sourcefiles\cecolab1.c(315): warning C4028: formal parameter 2 different from declaration
      1>C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\Microsoft.CppBuild.targets(1151,5): warning MSB8012: TargetPath(C:\HSE\Eco.Lab1\AssemblyFiles\Windows\VisualStudio_10\Eco.Lab1\StaticDebug\1F5DF16EE1BF43B999A434ED38FE8F3A.lib) does not match the Library's OutputFile property value (C:\HSE\Eco.Lab1\BuildFiles\Windows\x86\StaticDebug\1F5DF16EE1BF43B999A434ED38FE8F3A.lib). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Lib.OutputFile).
        Lib:
          C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\Lib.exe /OUT:"..\..\..\BuildFiles\Windows\x86\StaticDebug\1F5DF16EE1BF43B999A434ED38FE8F3A.lib" /NOLOGO Eco.Lab1\StaticDebug\CEcoLab1.obj
@@ -17,4 +21,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.38
+Time Elapsed 00:00:00.43

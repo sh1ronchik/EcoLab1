@@ -49,9 +49,7 @@
  *
  */
 static unsigned long lcg_seed = 1;
-static void lcg_srand(unsigned long s) {
-    lcg_seed = s;
-}
+static void lcg_srand(unsigned long s) { lcg_seed = s; }
 static int lcg_rand(void) {
     lcg_seed = lcg_seed * 1103515245UL + 12345UL;
     return (int)((lcg_seed >> 16) & 0x7FFF);
@@ -72,46 +70,11 @@ static int lcg_rand(void) {
 void *initIntArr(IEcoMemoryAllocator1 *pIMem, size_t size) {
     int32_t *arr = 0;
     size_t i;
+    if (pIMem == 0) return 0;
     arr = (int32_t*)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(size * sizeof(int32_t)));
     if (arr == 0) return 0;
     for (i = 0; i < size; ++i) {
-        arr[i] = (int32_t)(((i * 37) % 21) - 10); /* значения в диапазоне примерно [-10,10] */
-    }
-    return arr;
-}
-
-/*
- *
- * <сводка>
- *   Инициализация массива строк
- * </сводка>
- *
- * <описание>
- *   Возвращает char** — массив указателей на строки. Каждая строка выделяется
- *   через pIMem и заполняется случайными буквами (LCG).
- * </описание>
- *
- */
-void *initStringArr(IEcoMemoryAllocator1 *pIMem, size_t size) {
-    size_t i, j, str_size;
-    char **arr = (char **) pIMem->pVTbl->Alloc(pIMem, (uint32_t)(size * sizeof(char *)));
-    if (arr == 0) return 0;
-    lcg_srand(20241004UL);
-    for (i = 0; i < size; i++) {
-        arr[i] = (char *) pIMem->pVTbl->Alloc(pIMem, (uint32_t)(30 * sizeof(char)));
-        if (arr[i] == 0) {
-            /* в случае ошибки — освободим уже выделенные и вернём 0 */
-            size_t k;
-            for (k = 0; k < i; ++k) pIMem->pVTbl->Free(pIMem, arr[k]);
-            pIMem->pVTbl->Free(pIMem, arr);
-            return 0;
-        }
-        str_size = (size_t)(lcg_rand() % 15 + 5); /* длина 5..19 */
-        for (j = 0; j < str_size; ++j) {
-            int r = lcg_rand() % ('z' - 'a' + 1);
-            arr[i][j] = (char)(r + 'a');
-        }
-        arr[i][str_size] = 0;
+        arr[i] = (int32_t)(((i * 37) % 21) - 10);
     }
     return arr;
 }
@@ -132,15 +95,6 @@ static void printIntArr(const int32_t *arr, size_t n) {
     }
     printf("]\n");
 }
-static void printStringArr(char **arr, size_t n) {
-    size_t i;
-    printf("[");
-    for (i = 0; i < n; ++i) {
-        if (i) printf(", ");
-        printf("\"%s\"", arr[i]);
-    }
-    printf("]\n");
-}
 
 /* comparators for qsort */
 static int CDECL compareIntQ(const void *a, const void *b) {
@@ -149,11 +103,6 @@ static int CDECL compareIntQ(const void *a, const void *b) {
     if (va < vb) return -1;
     if (va > vb) return 1;
     return 0;
-}
-static int CDECL compareStringQ(const void *a, const void *b) {
-    const char * const *sa = (const char * const *)a;
-    const char * const *sb = (const char * const *)b;
-    return strcmp(*sa, *sb);
 }
 
 
@@ -215,7 +164,7 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         goto Release;
     }
 
-    /* ---------- TEST 1: int32_t ---------- */
+   /* ---------- TEST 1: int32_t ---------- */
     {
         int32_t *src = 0;
         int32_t *arr2 = 0;
@@ -264,62 +213,6 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         pIMem->pVTbl->Free(pIMem, src);
         pIMem->pVTbl->Free(pIMem, arr2);
     }
-
-    /* ---------- TEST 4: string ---------- */
-    {
-        char **src = 0;
-        char **arr2 = 0;
-        size_t n = 100000;
-        size_t i;
-        int ok_csort = 0;
-        int ok_qsort = 0;
-        clock_t t0, t1, tq0, tq1;
-        double elapsed_csort, elapsed_qsort;
-
-        src = (char**)initStringArr(pIMem, n);
-        if (src == 0) { printf("ERROR: initStringArr failed\n"); goto Release; }
-
-        /* копия указателей для qsort */
-        arr2 = (char**)pIMem->pVTbl->Alloc(pIMem, (uint32_t)(n * sizeof(char*)));
-        if (arr2 == 0) {
-            for (i = 0; i < n; ++i) pIMem->pVTbl->Free(pIMem, src[i]);
-            pIMem->pVTbl->Free(pIMem, src);
-            printf("ERROR: alloc arr2 failed\n");
-            goto Release;
-        }
-        for (i = 0; i < n; ++i) arr2[i] = src[i];
-
-        t0 = clock();
-        result = pIEcoLab1->pVTbl->csortString(pIEcoLab1, src, n);
-        t1 = clock();
-        elapsed_csort = (double)(t1 - t0) / (double)CLOCKS_PER_SEC;
-
-        if (result != 0) {
-            printf("TEST string: csortString returned error %d\n", result);
-        } else {
-            ok_csort = 1;
-            for (i = 1; i < n; ++i) {
-                if (strcmp(src[i-1], src[i]) > 0) { ok_csort = 0; break; }
-            }
-            printf("TEST string: csort %s (time = %.6f s)\n", ok_csort ? "PASS" : "FAIL", elapsed_csort);
-        }
-
-        tq0 = clock();
-        qsort(arr2, n, sizeof(char*), compareStringQ);
-        tq1 = clock();
-        elapsed_qsort = (double)(tq1 - tq0) / (double)CLOCKS_PER_SEC;
-
-        ok_qsort = 1;
-        for (i = 1; i < n; ++i) {
-            if (strcmp(arr2[i-1], arr2[i]) > 0) { ok_qsort = 0; break; }
-        }
-        printf("TEST string: qsort %s (time = %.6f s)\n\n", ok_qsort ? "PASS" : "FAIL", elapsed_qsort);
-
-        for (i = 0; i < n; ++i) pIMem->pVTbl->Free(pIMem, src[i]);
-        pIMem->pVTbl->Free(pIMem, src);
-        pIMem->pVTbl->Free(pIMem, arr2);
-    }
-
 Release:
 
 	/* Освобождение интерфейса для работы с интерфейсной шиной */

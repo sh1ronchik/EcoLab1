@@ -1,9 +1,10 @@
-﻿Build started 07.10.2025 17:33:32.
+﻿Build started 07.10.2025 18:24:08.
      1>Project "C:\HSE\Eco.Lab1\AssemblyFiles\Windows\VisualStudio_10\Eco.Lab1UnitTest.vcxproj" on node 2 (build target(s)).
      1>InitializeBuildStatus:
          Creating "Eco.Lab1UnitTest\StaticDebug\Eco.Lab1UnitTest.unsuccessfulbuild" because "AlwaysCreate" was specified.
        ClCompile:
-         All outputs are up-to-date.
+         C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\CL.exe /c /I..\..\..\SharedFiles /I..\..\..\HeaderFiles /IC:\HSE\Eco.Framework\Eco.Core1\SharedFiles /IC:\HSE\Eco.Framework\Eco.InterfaceBus1\SharedFiles /IC:\HSE\Eco.Framework\Eco.System1\SharedFiles /IC:\HSE\Eco.Framework\Eco.MemoryManager1\SharedFiles /IC:\HSE\Eco.Framework\Eco.FileSystemManagement1\SharedFiles /IC:\HSE\Eco.Framework\Eco.List1\SharedFiles /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D UGUID_UTILITY /D ECO_X86_32 /D ECO_WINDOWS /D ECO_WIN32 /D ECO_LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Eco.Lab1UnitTest\StaticDebug\\" /Fd"Eco.Lab1UnitTest\StaticDebug\vc100.pdb" /Gz /TC /analyze- /errorReport:prompt ..\..\..\UnitTestFiles\SourceFiles\EcoLab1.c
+         EcoLab1.c
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\HSE\Eco.Lab1\AssemblyFiles\Windows\VisualStudio_10\Eco.Lab1UnitTest\StaticDebug\Eco.Lab1UnitTest.exe" /INCREMENTAL:NO /NOLOGO /LIBPATH:..\..\..\BuildFiles\Windows\x86\StaticDebug\ /LIBPATH:C:\HSE\Eco.Framework\Eco.InterfaceBus1\BuildFiles\Windows\x86\StaticRelease\ /LIBPATH:C:\HSE\Eco.Framework\Eco.System1\BuildFiles\Windows\x86\StaticRelease\ /LIBPATH:C:\HSE\Eco.Framework\Eco.MemoryManager1\BuildFiles\Windows\x86\StaticRelease\ /LIBPATH:C:\HSE\Eco.Framework\Eco.FileSystemManagement1\BuildFiles\Windows\x86\StaticRelease\ 1F5DF16EE1BF43B999A434ED38FE8F3A.lib 00000000000000000000000042757331.lib 0000000000000000000000004D656D31.lib 00000000000000000000000046534D31.lib 00000000000000000000000053595332.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /ManifestFile:"Eco.Lab1UnitTest\StaticDebug\Eco.Lab1UnitTest.exe.intermediate.manifest" /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /DEBUG /PDB:"C:\HSE\Eco.Lab1\AssemblyFiles\Windows\VisualStudio_10\Eco.Lab1UnitTest\StaticDebug\Eco.Lab1UnitTest.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\HSE\Eco.Lab1\AssemblyFiles\Windows\VisualStudio_10\Eco.Lab1UnitTest\StaticDebug\Eco.Lab1UnitTest.lib" /MACHINE:X86 Eco.Lab1UnitTest\StaticDebug\EcoLab1.obj
      1>EcoLab1.obj : warning LNK4075: ignoring '/EDITANDCONTINUE' due to '/INCREMENTAL:NO' specification
@@ -35,4 +36,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:28.77
+Time Elapsed 00:00:05.14
