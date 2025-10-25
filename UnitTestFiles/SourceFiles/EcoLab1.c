@@ -30,6 +30,9 @@
 #include <time.h>
 #include <stdint.h>
 
+#include "IEcoCalculatorY.h"
+#include "IEcoCalculatorX.h"
+
 #if defined(_MSC_VER)
  #define CDECL __cdecl
 #else
@@ -128,6 +131,10 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
 	/* Указатель на тестируемый интерфейс */
     IEcoLab1* pIEcoLab1 = 0;
 
+	IEcoCalculatorX* pIX = 0;
+	IEcoCalculatorY* pIY = 0;
+
+
 	/* Проверка и создание системного интрефейса */
     result = pIUnk->pVTbl->QueryInterface(pIUnk, &GID_IEcoSystem, (void **)&pISys);
     if (result != 0 || pISys == 0) {
@@ -213,6 +220,25 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         pIMem->pVTbl->Free(pIMem, src);
         pIMem->pVTbl->Free(pIMem, arr2);
     }
+
+    /* ---------- TEST 2: QueryInterface от IEcoLab1 -> IEcoCalculatorX ---------- */
+    {
+        IEcoCalculatorX* pIX_local = 0;
+        IEcoCalculatorY* pIY_local = 0;
+
+        if ( pIEcoLab1->pVTbl->QueryInterface(pIEcoLab1, &IID_IEcoCalculatorX, (void**)&pIX_local) == 0 && pIX_local != 0 ) {
+            int32_t add = pIX_local->pVTbl->Addition(pIX_local, 2, 2);
+            int32_t sub = pIX_local->pVTbl->Subtraction(pIX_local, 5, 2);
+            printf("Addition(3,5) via IEcoLab1->QueryInterface = %d\n", add);
+            printf("Subtraction(10,4) via IEcoLab1->QueryInterface = %d\n", sub);
+
+            pIX_local->pVTbl->Release(pIX_local);
+            pIX_local = 0;
+        } else {
+            printf("IEcoCalculatorX not available via IEcoLab1\n");
+        }
+    }
+
 Release:
 
 	/* Освобождение интерфейса для работы с интерфейсной шиной */

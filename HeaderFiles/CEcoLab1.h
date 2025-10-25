@@ -23,6 +23,14 @@
 #include "IEcoLab1.h"
 #include "IEcoSystem1.h"
 #include "IdEcoMemoryManager1.h"
+#include "IEcoCalculatorX.h"
+#include "IEcoCalculatorY.h"
+#include "IdEcoCalculatorA.h"
+#include "IdEcoCalculatorB.h"
+#include "IdEcoCalculatorC.h"
+#include "IdEcoCalculatorD.h"
+#include "IdEcoCalculatorE.h"
+
 
 typedef struct CEcoLab1 {
 
@@ -41,6 +49,11 @@ typedef struct CEcoLab1 {
 
     /* Данные экземпляра */
     char_t* m_Name;
+
+	/* Ссылка на внутренний компонент */
+	IEcoCalculatorX* m_pICalcX;
+    IEcoCalculatorY* m_pICalcY; 
+
 
 } CEcoLab1, *CEcoLab1Ptr;
 
