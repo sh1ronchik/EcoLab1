@@ -229,8 +229,8 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         if ( pIEcoLab1->pVTbl->QueryInterface(pIEcoLab1, &IID_IEcoCalculatorX, (void**)&pIX_local) == 0 && pIX_local != 0 ) {
             int32_t add = pIX_local->pVTbl->Addition(pIX_local, 2, 2);
             int32_t sub = pIX_local->pVTbl->Subtraction(pIX_local, 5, 2);
-            printf("Addition(3,5) via IEcoLab1->QueryInterface = %d\n", add);
-            printf("Subtraction(10,4) via IEcoLab1->QueryInterface = %d\n", sub);
+            printf("Addition(2,2) via IEcoLab1->QueryInterface = %d\n", add);
+            printf("Subtraction(5,2) via IEcoLab1->QueryInterface = %d\n", sub);
 
             pIX_local->pVTbl->Release(pIX_local);
             pIX_local = 0;
