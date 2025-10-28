@@ -221,23 +221,68 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         pIMem->pVTbl->Free(pIMem, arr2);
     }
 
-    /* ---------- TEST 2: QueryInterface от IEcoLab1 -> IEcoCalculatorX ---------- */
-    {
-        IEcoCalculatorX* pIX_local = 0;
-        IEcoCalculatorY* pIY_local = 0;
+	/* ========== ДЕМОНСТРАЦИЯ ВКЛЮЧЕНИЯ/АГРЕГИРОВАНИЯ ВСЕХ КОМПОНЕНТОВ ========== */
+	{
+		IEcoCalculatorX* pICalcX = 0;
+		IEcoCalculatorY* pICalcY = 0;
+		IEcoLab1* pILab_back = 0;
+		int32_t add_res = 0;
+		int16_t sub_res = 0;
 
-        if ( pIEcoLab1->pVTbl->QueryInterface(pIEcoLab1, &IID_IEcoCalculatorX, (void**)&pIX_local) == 0 && pIX_local != 0 ) {
-            int32_t add = pIX_local->pVTbl->Addition(pIX_local, 2, 2);
-            int32_t sub = pIX_local->pVTbl->Subtraction(pIX_local, 5, 2);
-            printf("Addition(2,2) via IEcoLab1->QueryInterface = %d\n", add);
-            printf("Subtraction(5,2) via IEcoLab1->QueryInterface = %d\n", sub);
+		printf("\n=== TEST: Demonstration of inclusion and aggregation mechanisms ===\n\n");
 
-            pIX_local->pVTbl->Release(pIX_local);
-            pIX_local = 0;
-        } else {
-            printf("IEcoCalculatorX not available via IEcoLab1\n");
-        }
-    }
+		/* Test 1: AGGREGATION of component B */
+		printf("Test 1: Aggregation of component B (IEcoCalculatorX)\n");
+		if (pIEcoLab1->pVTbl->QueryInterface(pIEcoLab1, &IID_IEcoCalculatorX, (void**)&pICalcX) == 0 && pICalcX != 0) {
+			printf("\n%p\n\n", pICalcX);
+			add_res = pICalcX->pVTbl->Addition(pICalcX, 15, 7);
+			printf("\n%d\n\n", add_res);
+			sub_res = pICalcX->pVTbl->Subtraction(pICalcX, 15, 7);
+			printf("  Addition(15, 7) = %d (component B - aggregation)\n", add_res);
+			printf("  Subtraction(15, 7) = %d (component B - aggregation)\n", sub_res);
+			printf("  Mechanism: component B's interface is passed directly to the client\n\n");
+			pICalcX->pVTbl->Release(pICalcX);
+			pICalcX = 0;
+		}
+
+		/* Test 2: INCLUSION of components D and E */
+		printf("Test 2: Inclusion of components D and E (IEcoCalculatorY)\n");
+		if (pIEcoLab1->pVTbl->QueryInterface(pIEcoLab1, &IID_IEcoCalculatorY, (void**)&pICalcY) == 0 && pICalcY != 0) {
+			int32_t mul_res = pICalcY->pVTbl->Multiplication(pICalcY, 8, 4);
+			int16_t div_res = pICalcY->pVTbl->Division(pICalcY, 20, 5);
+			printf("  Multiplication(8, 4) = %d (component D - inclusion)\n", mul_res);
+			printf("  Division(20, 5) = %d (component E - inclusion)\n", div_res);
+			printf("  Mechanism: EcoLab1 calls methods of internal components\n\n");
+			pICalcY->pVTbl->Release(pICalcY);
+			pICalcY = 0;
+		}
+
+		/* Test 3: Demonstration that any interface can produce another */
+		printf("Test 3: QueryInterface property - obtaining interfaces\n");
+		if (pIEcoLab1->pVTbl->QueryInterface(pIEcoLab1, &IID_IEcoCalculatorX, (void**)&pICalcX) == 0 && pICalcX != 0) {
+			printf("  IEcoLab1 -> IEcoCalculatorX: OK\n");
+        
+			if (pICalcX->pVTbl->QueryInterface(pICalcX, &IID_IEcoCalculatorY, (void**)&pICalcY) == 0 && pICalcY != 0) {
+				printf("  IEcoCalculatorX -> IEcoCalculatorY: OK\n");
+            
+				pILab_back = 0;
+				if (pICalcY->pVTbl->QueryInterface(pICalcY, &IID_IEcoLab1, (void**)&pILab_back) == 0 && pILab_back != 0) {
+					printf("  IEcoCalculatorY -> IEcoLab1: OK\n");
+					printf("  Conclusion: any interface can obtain any other interface!\n\n");
+					pILab_back->pVTbl->Release(pILab_back);
+				}
+				pICalcY->pVTbl->Release(pICalcY);
+			}
+			pICalcX->pVTbl->Release(pICalcX);
+		}
+
+		printf("=== SUMMARY: All 5 components are engaged ===\n");
+		printf("Component A: included (used in Addition via component B)\n");
+		printf("Component B: AGGREGATED (IEcoCalculatorX passed directly)\n");
+		printf("Component C: included (used in Subtraction via component B)\n");
+		printf("Component D: INCLUDED (Multiplication calls its method)\n");
+		printf("Component E: INCLUDED (Division calls its method)\n\n");
+	}
 
 Release:
 

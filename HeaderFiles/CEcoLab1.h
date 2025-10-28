@@ -50,9 +50,14 @@ typedef struct CEcoLab1 {
     /* Данные экземпляра */
     char_t* m_Name;
 
-	/* Ссылка на внутренний компонент */
-	IEcoCalculatorX* m_pICalcX;
-    IEcoCalculatorY* m_pICalcY; 
+	/* Агрегирование компонента */
+	IEcoCalculatorX* m_pAggregatedCalcX;
+
+	/* Включение компонентов */
+	IEcoCalculatorX* m_pContainedCalcX_A;  /* Add */
+	IEcoCalculatorX* m_pContainedCalcX_C;  /* Sub */
+	IEcoCalculatorY* m_pContainedCalcY_D;  /* Mult */
+	IEcoCalculatorY* m_pContainedCalcY_E;  /* Div */
 
 
 } CEcoLab1, *CEcoLab1Ptr;

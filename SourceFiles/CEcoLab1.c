@@ -33,46 +33,51 @@
  * </описание>
  *
  */
-static int16_t ECOCALLMETHOD CEcoLab1_QueryInterface(/* in */ IEcoLab1Ptr_t me, /* in */ const UGUID* riid, /* out */ void** ppv) {
+int16_t ECOCALLMETHOD CEcoLab1_QueryInterface(IEcoLab1Ptr_t me, const UGUID* riid, void** ppv) {
     CEcoLab1* pCMe = (CEcoLab1*)me;
+    int16_t result = -1;
 
-    /* Проверка указателей */
     if (me == 0 || ppv == 0) {
         return ERR_ECO_POINTER;
     }
 
-    /* Проверка и получение запрошенного интерфейса */
-    if ( IsEqualUGUID(riid, &IID_IEcoLab1) ) {
+    if (IsEqualUGUID(riid, &IID_IEcoLab1)) {
         *ppv = &pCMe->m_pVTblIEcoLab1;
         pCMe->m_pVTblIEcoLab1->AddRef((IEcoLab1*)pCMe);
+        result = 0;
     }
-    else if ( IsEqualUGUID(riid, &IID_IEcoUnknown) ) {
+    else if (IsEqualUGUID(riid, &IID_IEcoCalculatorX)) {
+        /* Агрегация B */
+        if (pCMe->m_pAggregatedCalcX != 0) {
+            /* Передача интерфейса B */
+            *ppv = pCMe->m_pAggregatedCalcX;
+            pCMe->m_pAggregatedCalcX->pVTbl->AddRef(pCMe->m_pAggregatedCalcX);
+            result = 0;
+        }
+        else {
+            /* Включение компонентов */
+            *ppv = &pCMe->m_pVTblIEcoLab1;
+            pCMe->m_pVTblIEcoLab1->AddRef((IEcoLab1*)pCMe);
+            result = 0;
+        }
+    }
+    else if (IsEqualUGUID(riid, &IID_IEcoCalculatorY)) {
+        /* Возврат IEcoLab1 */
         *ppv = &pCMe->m_pVTblIEcoLab1;
         pCMe->m_pVTblIEcoLab1->AddRef((IEcoLab1*)pCMe);
+        result = 0;
     }
-	else if ( IsEqualUGUID(riid, &IID_IEcoCalculatorX) ) {
-	  if ( pCMe->m_pICalcX != 0 ) {
-		*ppv = pCMe->m_pICalcX;
-		pCMe->m_pICalcX->pVTbl->AddRef(pCMe->m_pICalcX);
-	  } else {
-		*ppv = 0;
-		return ERR_ECO_NOINTERFACE;
-	  }
-	}
-	else if ( IsEqualUGUID(riid, &IID_IEcoCalculatorY) ) {
-	  if ( pCMe->m_pICalcY != 0 ) {
-		*ppv = pCMe->m_pICalcY;
-		pCMe->m_pICalcY->pVTbl->AddRef(pCMe->m_pICalcY);
-	  } else {
-		*ppv = 0;
-		return ERR_ECO_NOINTERFACE;
-	  }
-	}
+    else if (IsEqualUGUID(riid, &IID_IEcoUnknown)) {
+        *ppv = &pCMe->m_pVTblIEcoLab1;
+        pCMe->m_pVTblIEcoLab1->AddRef((IEcoLab1*)pCMe);
+        result = 0;
+    }
     else {
         *ppv = 0;
-        return ERR_ECO_NOINTERFACE;
+        result = ERR_ECO_NOINTERFACE;
     }
-    return ERR_ECO_SUCCESES;
+
+    return result;
 }
 
 /*
@@ -225,6 +230,78 @@ int16_t ECOCALLMETHOD CEcoLab1_csort(/* in */ IEcoLab1Ptr_t me, void *arrPrt, si
     }
 }
 
+/* ========== Реализация методов IEcoCalculatorX через ВКЛЮЧЕНИЕ ========== */
+
+/* Сложение - используем ВКЛЮЧЕНИЕ компонента A */
+int32_t ECOCALLMETHOD CEcoLab1_Add(struct IEcoLab1* me, int16_t a, int16_t b) {
+    CEcoLab1* pCMe = (CEcoLab1*)me;
+    int32_t result = 0;
+
+    if (me == 0) {
+        return -1;
+    }
+
+    /* ВКЛЮЧЕНИЕ: вызываем метод внутреннего компонента A */
+    if (pCMe->m_pContainedCalcX_A != 0) {
+        result = pCMe->m_pContainedCalcX_A->pVTbl->Addition(pCMe->m_pContainedCalcX_A, a, b);
+    }
+
+    return result;
+}
+
+/* Вычитание - используем ВКЛЮЧЕНИЕ компонента C */
+int16_t ECOCALLMETHOD CEcoLab1_Sub(struct IEcoLab1* me, int16_t a, int16_t b) {
+    CEcoLab1* pCMe = (CEcoLab1*)me;
+    int16_t result = 0;
+
+    if (me == 0) {
+        return -1;
+    }
+
+    /* ВКЛЮЧЕНИЕ: вызываем метод внутреннего компонента C */
+    if (pCMe->m_pContainedCalcX_C != 0) {
+        result = pCMe->m_pContainedCalcX_C->pVTbl->Subtraction(pCMe->m_pContainedCalcX_C, a, b);
+    }
+
+    return result;
+}
+
+/* ========== Реализация методов IEcoCalculatorY через ВКЛЮЧЕНИЕ ========== */
+
+/* Умножение - используем ВКЛЮЧЕНИЕ компонента D */
+int32_t ECOCALLMETHOD CEcoLab1_Multiply(struct IEcoLab1* me, int16_t a, int16_t b) {
+    CEcoLab1* pCMe = (CEcoLab1*)me;
+    int32_t result = 0;
+
+    if (me == 0) {
+        return -1;
+    }
+
+    /* ВКЛЮЧЕНИЕ: вызываем метод внутреннего компонента D */
+    if (pCMe->m_pContainedCalcY_D != 0) {
+        result = pCMe->m_pContainedCalcY_D->pVTbl->Multiplication(pCMe->m_pContainedCalcY_D, a, b);
+    }
+
+    return result;
+}
+
+/* Деление - используем ВКЛЮЧЕНИЕ компонента E */
+int16_t ECOCALLMETHOD CEcoLab1_Divide(struct IEcoLab1* me, int16_t a, int16_t b) {
+    CEcoLab1* pCMe = (CEcoLab1*)me;
+    int16_t result = 0;
+
+    if (me == 0) {
+        return -1;
+    }
+
+    /* ВКЛЮЧЕНИЕ: вызываем метод внутреннего компонента E */
+    if (pCMe->m_pContainedCalcY_E != 0) {
+        result = pCMe->m_pContainedCalcY_E->pVTbl->Division(pCMe->m_pContainedCalcY_E, a, b);
+    }
+
+    return result;
+}
+
 
 /*
  *
@@ -238,6 +315,7 @@ int16_t ECOCALLMETHOD CEcoLab1_csort(/* in */ IEcoLab1Ptr_t me, void *arrPrt, si
  *
  */
 int16_t ECOCALLMETHOD initCEcoLab1(/*in*/ IEcoLab1Ptr_t me, /* in */ struct IEcoUnknown *pIUnkSystem) {
+	IEcoUnknown* pOuterUnknown = (IEcoUnknown*)me;
     CEcoLab1* pCMe = (CEcoLab1*)me;
     IEcoInterfaceBus1* pIBus = 0;
     int16_t result = -1;
@@ -261,11 +339,29 @@ int16_t ECOCALLMETHOD initCEcoLab1(/*in*/ IEcoLab1Ptr_t me, /* in */ struct IEco
     /* Сохранение указателя на системный интерфейс */
     pCMe->m_pISys = (IEcoSystem1*)pIUnkSystem;
 
-	pCMe->m_pICalcX = 0;
-	pCMe->m_pICalcY = 0;
+	/* Инициализируем указатели */
+	pCMe->m_pAggregatedCalcX = 0;
+	pCMe->m_pContainedCalcX_A = 0;
+	pCMe->m_pContainedCalcX_C = 0;
+	pCMe->m_pContainedCalcY_D = 0;
+	pCMe->m_pContainedCalcY_E = 0;
 
-	pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoCalculatorB, 0, &IID_IEcoCalculatorX, (void**)&pCMe->m_pICalcX);
-	pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoCalculatorD, 0, &IID_IEcoCalculatorY, (void**)&pCMe->m_pICalcY);
+	/* АГРЕГИРОВАНИЕ: Пытаемся получить компонент B */
+	result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoCalculatorB, pOuterUnknown, &IID_IEcoCalculatorX, (void**)&pCMe->m_pAggregatedCalcX);
+	/* Если не получилось - не критично, будем использовать включение A и C */
+
+	/* ВКЛЮЧЕНИЕ: Получаем компонент A для операции Addition */
+	result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoCalculatorA, 0, &IID_IEcoCalculatorX, (void**)&pCMe->m_pContainedCalcX_A);
+
+	/* ВКЛЮЧЕНИЕ: Получаем компонент C для операции Subtraction */
+	result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoCalculatorC, 0, &IID_IEcoCalculatorX, (void**)&pCMe->m_pContainedCalcX_C);
+
+	/* ВКЛЮЧЕНИЕ: Получаем компонент D для операции Multiplication */
+	result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoCalculatorD, 0, &IID_IEcoCalculatorY, (void**)&pCMe->m_pContainedCalcY_D);
+
+	/* ВКЛЮЧЕНИЕ: Получаем компонент E для операции Division */
+	result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoCalculatorE, 0, &IID_IEcoCalculatorY, (void**)&pCMe->m_pContainedCalcY_E);
+
 
 
     /* Освобождение */
@@ -279,8 +375,12 @@ IEcoLab1VTbl g_x277FC00C35624096AFCFC125B94EEC90VTbl = {
     CEcoLab1_QueryInterface,
     CEcoLab1_AddRef,
     CEcoLab1_Release,
-    CEcoLab1_csort,        /* общий (совместимость) */
-    CEcoLab1_csortInt,     /* специализированный для int32_t */
+    CEcoLab1_Add,         /* Add */
+    CEcoLab1_Sub,         /* Sub */
+    CEcoLab1_Multiply,    /* Mult */
+    CEcoLab1_Divide,       /* Div */
+	CEcoLab1_csort,
+	CEcoLab1_csortInt,
 };
 
 /*
@@ -388,13 +488,23 @@ void ECOCALLMETHOD deleteCEcoLab1(/* in */ IEcoLab1* pIEcoLab1) {
             pCMe->m_pISys->pVTbl->Release(pCMe->m_pISys);
         }
 
-		if ( pCMe->m_pICalcX != 0 ) {
-		  pCMe->m_pICalcX->pVTbl->Release(pCMe->m_pICalcX);
-		  pCMe->m_pICalcX = 0;
+		/* Освобождаем агрегированный компонент */
+		if (pCMe->m_pAggregatedCalcX != 0) {
+			pCMe->m_pAggregatedCalcX->pVTbl->Release(pCMe->m_pAggregatedCalcX);
 		}
-		if ( pCMe->m_pICalcY != 0 ) {
-		  pCMe->m_pICalcY->pVTbl->Release(pCMe->m_pICalcY);
-		  pCMe->m_pICalcY = 0;
+
+		/* Освобождаем включенные компоненты */
+		if (pCMe->m_pContainedCalcX_A != 0) {
+			pCMe->m_pContainedCalcX_A->pVTbl->Release(pCMe->m_pContainedCalcX_A);
+		}
+		if (pCMe->m_pContainedCalcX_C != 0) {
+			pCMe->m_pContainedCalcX_C->pVTbl->Release(pCMe->m_pContainedCalcX_C);
+		}
+		if (pCMe->m_pContainedCalcY_D != 0) {
+			pCMe->m_pContainedCalcY_D->pVTbl->Release(pCMe->m_pContainedCalcY_D);
+		}
+		if (pCMe->m_pContainedCalcY_E != 0) {
+			pCMe->m_pContainedCalcY_E->pVTbl->Release(pCMe->m_pContainedCalcY_E);
 		}
 
         pIMem->pVTbl->Free(pIMem, pCMe);
