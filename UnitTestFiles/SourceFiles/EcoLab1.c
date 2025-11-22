@@ -151,6 +151,7 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         goto Release;
     }
 
+
 #ifdef ECO_LIB
     result = pIBus->pVTbl->RegisterComponent(pIBus, &CID_EcoLab1, (IEcoUnknown*)GetIEcoComponentFactoryPtr_1F5DF16EE1BF43B999A434ED38FE8F3A);
     if (result != 0) {
@@ -170,9 +171,10 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         printf("ERROR: failed to obtain IEcoLab1\n");
         goto Release;
     }
+	
 
    /* ---------- TEST 1: int32_t ---------- */
-    {
+    { 
         int32_t *src = 0;
         int32_t *arr2 = 0;
         size_t n = 100000;
@@ -181,6 +183,8 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         int ok_qsort = 0;
         clock_t t0, t1, tq0, tq1;
         double elapsed_csort, elapsed_qsort;
+
+		printf("=== TEST LAB1 ===\n\n");
 
         src = (int32_t*)initIntArr(pIMem, n);
         if (src == 0) { printf("ERROR: initIntArr failed\n"); goto Release; }
@@ -221,67 +225,139 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
         pIMem->pVTbl->Free(pIMem, arr2);
     }
 
-	/* ========== ДЕМОНСТРАЦИЯ ВКЛЮЧЕНИЯ/АГРЕГИРОВАНИЯ ВСЕХ КОМПОНЕНТОВ ========== */
+	
+	
 	{
-		IEcoCalculatorX* pICalcX = 0;
-		IEcoCalculatorY* pICalcY = 0;
-		IEcoLab1* pILab_back = 0;
-		int32_t add_res = 0;
-		int16_t sub_res = 0;
+		IEcoLab1* labComp = 0;
+		IEcoCalculatorX* ix = 0;
+		IEcoCalculatorY* iy = 0;
+		IEcoLab1* labBack = 0;
+		int16_t rc = -1;
 
-		printf("\n=== TEST: Demonstration of inclusion and aggregation mechanisms ===\n\n");
+		printf("=== TEST LAB2 ===\n\n");
+		printf("\n=== LAB2: Practical arithmetic & property tests ===\n\n");
 
-		/* Test 1: AGGREGATION of component B */
-		printf("Test 1: Aggregation of component B (IEcoCalculatorX)\n");
-		if (pIEcoLab1->pVTbl->QueryInterface(pIEcoLab1, &IID_IEcoCalculatorX, (void**)&pICalcX) == 0 && pICalcX != 0) {
-			printf("\n%p\n\n", pICalcX);
-			add_res = pICalcX->pVTbl->Addition(pICalcX, 15, 7);
-			printf("\n%d\n\n", add_res);
-			sub_res = pICalcX->pVTbl->Subtraction(pICalcX, 15, 7);
-			printf("  Addition(15, 7) = %d (component B - aggregation)\n", add_res);
-			printf("  Subtraction(15, 7) = %d (component B - aggregation)\n", sub_res);
-			printf("  Mechanism: component B's interface is passed directly to the client\n\n");
-			pICalcX->pVTbl->Release(pICalcX);
-			pICalcX = 0;
-		}
-
-		/* Test 2: INCLUSION of components D and E */
-		printf("Test 2: Inclusion of components D and E (IEcoCalculatorY)\n");
-		if (pIEcoLab1->pVTbl->QueryInterface(pIEcoLab1, &IID_IEcoCalculatorY, (void**)&pICalcY) == 0 && pICalcY != 0) {
-			int32_t mul_res = pICalcY->pVTbl->Multiplication(pICalcY, 8, 4);
-			int16_t div_res = pICalcY->pVTbl->Division(pICalcY, 20, 5);
-			printf("  Multiplication(8, 4) = %d (component D - inclusion)\n", mul_res);
-			printf("  Division(20, 5) = %d (component E - inclusion)\n", div_res);
-			printf("  Mechanism: EcoLab1 calls methods of internal components\n\n");
-			pICalcY->pVTbl->Release(pICalcY);
-			pICalcY = 0;
-		}
-
-		/* Test 3: Demonstration that any interface can produce another */
-		printf("Test 3: QueryInterface property - obtaining interfaces\n");
-		if (pIEcoLab1->pVTbl->QueryInterface(pIEcoLab1, &IID_IEcoCalculatorX, (void**)&pICalcX) == 0 && pICalcX != 0) {
-			printf("  IEcoLab1 -> IEcoCalculatorX: OK\n");
-        
-			if (pICalcX->pVTbl->QueryInterface(pICalcX, &IID_IEcoCalculatorY, (void**)&pICalcY) == 0 && pICalcY != 0) {
-				printf("  IEcoCalculatorX -> IEcoCalculatorY: OK\n");
-            
-				pILab_back = 0;
-				if (pICalcY->pVTbl->QueryInterface(pICalcY, &IID_IEcoLab1, (void**)&pILab_back) == 0 && pILab_back != 0) {
-					printf("  IEcoCalculatorY -> IEcoLab1: OK\n");
-					printf("  Conclusion: any interface can obtain any other interface!\n\n");
-					pILab_back->pVTbl->Release(pILab_back);
-				}
-				pICalcY->pVTbl->Release(pICalcY);
+		/* ---- Case A ---- */
+		labComp = 0; ix = 0; iy = 0;
+		rc = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoLab1, 0, &IID_IEcoLab1, (void**)&labComp);
+		if (rc == 0 && labComp) {
+			printf("Case A:\n");
+			rc = labComp->pVTbl->QueryInterface(labComp, &IID_IEcoCalculatorX, (void**)&ix);
+			if (rc == 0 && ix) {
+				printf("  6 + 7 = %d\n", ix->pVTbl->Addition(ix, 6, 7));
+				printf("  14 - 5 = %d\n", ix->pVTbl->Subtraction(ix, 14, 5));
+				ix->pVTbl->Release(ix); ix = 0;
+			} else {
+				printf("  IX: unavailable\n");
 			}
-			pICalcX->pVTbl->Release(pICalcX);
+			rc = labComp->pVTbl->QueryInterface(labComp, &IID_IEcoCalculatorY, (void**)&iy);
+			if (rc == 0 && iy) {
+				printf("  5 * 4 = %d\n", iy->pVTbl->Multiplication(iy, 5, 4));
+				printf("  9 / 3 = %d\n", iy->pVTbl->Division(iy, 9, 3));
+				iy->pVTbl->Release(iy); iy = 0;
+			} else {
+				printf("  IY: unavailable\n");
+			}
+			labComp->pVTbl->Release(labComp); labComp = 0;
+		} else {
+			printf("Case A: cannot obtain IEcoLab1 (rc=%d)\n", rc);
 		}
 
-		printf("=== SUMMARY: All 5 components are engaged ===\n");
-		printf("Component A: included (used in Addition via component B)\n");
-		printf("Component B: AGGREGATED (IEcoCalculatorX passed directly)\n");
-		printf("Component C: included (used in Subtraction via component B)\n");
-		printf("Component D: INCLUDED (Multiplication calls its method)\n");
-		printf("Component E: INCLUDED (Division calls its method)\n\n");
+		/* ---- Case B ---- */
+		labComp = 0; ix = 0; iy = 0;
+		rc = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoLab1, 0, &IID_IEcoLab1, (void**)&labComp);
+		if (rc == 0 && labComp) {
+			printf("\nCase B:\n");
+			rc = labComp->pVTbl->QueryInterface(labComp, &IID_IEcoCalculatorX, (void**)&ix);
+			if (rc == 0 && ix) {
+				printf("  2 + 11 = %d\n", ix->pVTbl->Addition(ix, 2, 11));
+				printf("  -2 - (-6) = %d\n", ix->pVTbl->Subtraction(ix, -2, -6));
+				ix->pVTbl->Release(ix); ix = 0;
+			}
+			rc = labComp->pVTbl->QueryInterface(labComp, &IID_IEcoCalculatorY, (void**)&iy);
+			if (rc == 0 && iy) {
+				printf("  8 * 6 = %d\n", iy->pVTbl->Multiplication(iy, 8, 6));
+				printf("  18 / 3 = %d\n", iy->pVTbl->Division(iy, 18, 3));
+				iy->pVTbl->Release(iy); iy = 0;
+			}
+			labComp->pVTbl->Release(labComp); labComp = 0;
+		}
+
+		/* ---- Case C ---- */
+		labComp = 0; ix = 0; iy = 0;
+		rc = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoLab1, 0, &IID_IEcoLab1, (void**)&labComp);
+		if (rc == 0 && labComp) {
+			printf("\nCase C:\n");
+			rc = labComp->pVTbl->QueryInterface(labComp, &IID_IEcoCalculatorX, (void**)&ix);
+			if (rc == 0 && ix) {
+				printf("  202 + 808 = %d\n", ix->pVTbl->Addition(ix, 202, 808));
+				printf("  1000 - 7 = %d\n", ix->pVTbl->Subtraction(ix, 1000, 7));
+				ix->pVTbl->Release(ix); ix = 0;
+			}
+			rc = labComp->pVTbl->QueryInterface(labComp, &IID_IEcoCalculatorY, (void**)&iy);
+			if (rc == 0 && iy) {
+				printf("  12 * 12 = %d\n", iy->pVTbl->Multiplication(iy, 12, 12));
+				printf("  125 / 5 = %d\n", iy->pVTbl->Division(iy, 125, 5));
+				iy->pVTbl->Release(iy); iy = 0;
+			}
+			labComp->pVTbl->Release(labComp); labComp = 0;
+		}
+
+		/* ---- Property test 1: IX -> IY -> ILab1 ---- */
+		labComp = 0; ix = 0; iy = 0; labBack = 0;
+		rc = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoLab1, 0, &IID_IEcoLab1, (void**)&labComp);
+		if (rc == 0 && labComp) {
+			printf("\nProperty test 1: IX -> IY -> ILab1\n");
+			rc = labComp->pVTbl->QueryInterface(labComp, &IID_IEcoCalculatorX, (void**)&ix);
+			if (rc == 0 && ix) {
+				rc = ix->pVTbl->QueryInterface(ix, &IID_IEcoCalculatorY, (void**)&iy);
+				if (rc == 0 && iy) {
+					rc = iy->pVTbl->QueryInterface(iy, &IID_IEcoLab1, (void**)&labBack);
+					if (rc == 0 && labBack) {
+						printf("  IX -> IY -> ILab1 : OK (labBack=%p)\n", (void*)labBack);
+						labBack->pVTbl->Release(labBack); labBack = 0;
+					} else {
+						printf("  IX -> IY -> ILab1 : FAILED (no ILab1)\n");
+					}
+					iy->pVTbl->Release(iy); iy = 0;
+				} else {
+					printf("  IX -> IY : FAILED (no IY)\n");
+				}
+				ix->pVTbl->Release(ix); ix = 0;
+			} else {
+				printf("  IX not available (property test skipped)\n");
+			}
+			labComp->pVTbl->Release(labComp); labComp = 0;
+		}
+
+		/* ---- Property test 2: IY -> IX -> ILab1 ---- */
+		labComp = 0; ix = 0; iy = 0; labBack = 0;
+		rc = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoLab1, 0, &IID_IEcoLab1, (void**)&labComp);
+		if (rc == 0 && labComp) {
+			printf("\nProperty test 2: IY -> IX -> ILab1\n");
+			rc = labComp->pVTbl->QueryInterface(labComp, &IID_IEcoCalculatorY, (void**)&iy);
+			if (rc == 0 && iy) {
+				rc = iy->pVTbl->QueryInterface(iy, &IID_IEcoCalculatorX, (void**)&ix);
+				if (rc == 0 && ix) {
+					rc = ix->pVTbl->QueryInterface(ix, &IID_IEcoLab1, (void**)&labBack);
+					if (rc == 0 && labBack) {
+						printf("  IY -> IX -> ILab1 : OK (labBack=%p)\n", (void*)labBack);
+						labBack->pVTbl->Release(labBack); labBack = 0;
+					} else {
+						printf("  IY -> IX -> ILab1 : FAILED (no ILab1)\n");
+					}
+					ix->pVTbl->Release(ix); ix = 0;
+				} else {
+					printf("  IY -> IX : FAILED (no IX)\n");
+				}
+				iy->pVTbl->Release(iy); iy = 0;
+			} else {
+				printf("  IY not available (property test skipped)\n");
+			}
+			labComp->pVTbl->Release(labComp); labComp = 0;
+		}
+
+		printf("\n=== End of tests ===\n\n");
 	}
 
 Release:

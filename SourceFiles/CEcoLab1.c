@@ -1,4 +1,4 @@
-﻿/*
+﻿	/*
  * <кодировка символов>
  *   Cyrillic (UTF-8 with signature) - Codepage 65001
  * </кодировка символов>
@@ -21,12 +21,6 @@
 #include "IEcoInterfaceBus1.h"
 #include "IEcoInterfaceBus1MemExt.h"
 #include "CEcoLab1.h"
-
-/*
- * Вспомогательная функция для получения указателя CEcoLab1 из любого интерфейса
- */
-#define ECO_GET_THIS(me, vtbl_name) \
-    ((CEcoLab1*)((char*)(me) - offsetof(CEcoLab1, vtbl_name)))
 
 /*
  *
@@ -136,43 +130,43 @@ static uint32_t ECOCALLMETHOD CEcoLab1_Release(IEcoLab1Ptr_t me) {
 
 /* QueryInterface для IEcoCalculatorX */
 static int16_t ECOCALLMETHOD CEcoLab1_CalcX_QueryInterface(IEcoCalculatorXPtr_t me, const UGUID* riid, void** ppv) {
-    CEcoLab1* pCMe = ECO_GET_THIS(me, m_pVTblIEcoCalculatorX);
+    CEcoLab1* pCMe = (CEcoLab1*)((uint64_t)me - sizeof(struct IEcoLab1*));
     return CEcoLab1_QueryInterface((IEcoLab1*)pCMe, riid, ppv);
 }
 
 /* AddRef для IEcoCalculatorX */
 static uint32_t ECOCALLMETHOD CEcoLab1_CalcX_AddRef(IEcoCalculatorXPtr_t me) {
-    CEcoLab1* pCMe = ECO_GET_THIS(me, m_pVTblIEcoCalculatorX);
+    CEcoLab1* pCMe = (CEcoLab1*)((uint64_t)me - sizeof(struct IEcoLab1*));
     return CEcoLab1_AddRef((IEcoLab1*)pCMe);
 }
 
 /* Release для IEcoCalculatorX */
 static uint32_t ECOCALLMETHOD CEcoLab1_CalcX_Release(IEcoCalculatorXPtr_t me) {
-    CEcoLab1* pCMe = ECO_GET_THIS(me, m_pVTblIEcoCalculatorX);
+    CEcoLab1* pCMe = (CEcoLab1*)((uint64_t)me - sizeof(struct IEcoLab1*));
     return CEcoLab1_Release((IEcoLab1*)pCMe);
 }
 
 /* QueryInterface для IEcoCalculatorY */
 static int16_t ECOCALLMETHOD CEcoLab1_CalcY_QueryInterface(IEcoCalculatorYPtr_t me, const UGUID* riid, void** ppv) {
-    CEcoLab1* pCMe = ECO_GET_THIS(me, m_pVTblIEcoCalculatorY);
+    CEcoLab1* pCMe = (CEcoLab1*)((uint64_t)me - sizeof(struct IEcoLab1*) - sizeof(struct IEcoCalculatorX*));
     return CEcoLab1_QueryInterface((IEcoLab1*)pCMe, riid, ppv);
 }
 
 /* AddRef для IEcoCalculatorY */
 static uint32_t ECOCALLMETHOD CEcoLab1_CalcY_AddRef(IEcoCalculatorYPtr_t me) {
-    CEcoLab1* pCMe = ECO_GET_THIS(me, m_pVTblIEcoCalculatorY);
+    CEcoLab1* pCMe = (CEcoLab1*)((uint64_t)me - sizeof(struct IEcoLab1*) - sizeof(struct IEcoCalculatorX*));
     return CEcoLab1_AddRef((IEcoLab1*)pCMe);
 }
 
 /* Release для IEcoCalculatorY */
 static uint32_t ECOCALLMETHOD CEcoLab1_CalcY_Release(IEcoCalculatorYPtr_t me) {
-    CEcoLab1* pCMe = ECO_GET_THIS(me, m_pVTblIEcoCalculatorY);
+    CEcoLab1* pCMe = (CEcoLab1*)((uint64_t)me - sizeof(struct IEcoLab1*) - sizeof(struct IEcoCalculatorX*));
     return CEcoLab1_Release((IEcoLab1*)pCMe);
 }
 
-/* Прототипы функций сортировки */
-static int16_t ECOCALLMETHOD CEcoLab1_csort(IEcoLab1Ptr_t me, void *arrPrt, size_t arrSize, size_t elemSize);
-static int16_t ECOCALLMETHOD CEcoLab1_csortInt(IEcoLab1Ptr_t me, int32_t *arr, size_t arrSize);
+/* Прототипы (только int и string) */
+static int16_t ECOCALLMETHOD CEcoLab1_csort(/* in */ IEcoLab1Ptr_t me, void *arrPrt, size_t arrSize, size_t elemSize);
+static int16_t ECOCALLMETHOD CEcoLab1_csortInt(/* in */ IEcoLab1Ptr_t me, int32_t *arr, size_t arrSize);
 
 /* Counting sort для int32_t (устойчивая) */
 static int16_t ECOCALLMETHOD CEcoLab1_csortInt(IEcoLab1Ptr_t me, int32_t *arr, size_t arrSize) {
@@ -269,7 +263,7 @@ int16_t ECOCALLMETHOD CEcoLab1_csort(IEcoLab1Ptr_t me, void *arrPrt, size_t arrS
 
 /* Сложение - используем ВКЛЮЧЕНИЕ компонента A */
 int32_t ECOCALLMETHOD CEcoLab1_Addition(IEcoCalculatorXPtr_t me, int16_t a, int16_t b) {
-    CEcoLab1* pCMe = ECO_GET_THIS(me, m_pVTblIEcoCalculatorX);
+    CEcoLab1* pCMe = (CEcoLab1*)((uint64_t)me - sizeof(struct IEcoLab1*));
     int32_t result = 0;
 
     if (me == 0) {
@@ -286,7 +280,7 @@ int32_t ECOCALLMETHOD CEcoLab1_Addition(IEcoCalculatorXPtr_t me, int16_t a, int1
 
 /* Вычитание - используем ВКЛЮЧЕНИЕ компонента C */
 int16_t ECOCALLMETHOD CEcoLab1_Subtraction(IEcoCalculatorXPtr_t me, int16_t a, int16_t b) {
-    CEcoLab1* pCMe = ECO_GET_THIS(me, m_pVTblIEcoCalculatorX);
+    CEcoLab1* pCMe = (CEcoLab1*)((uint64_t)me - sizeof(struct IEcoLab1*));
     int16_t result = 0;
 
     if (me == 0) {
@@ -305,7 +299,7 @@ int16_t ECOCALLMETHOD CEcoLab1_Subtraction(IEcoCalculatorXPtr_t me, int16_t a, i
 
 /* Умножение - используем ВКЛЮЧЕНИЕ компонента D */
 int32_t ECOCALLMETHOD CEcoLab1_Multiplication(IEcoCalculatorYPtr_t me, int16_t a, int16_t b) {
-    CEcoLab1* pCMe = ECO_GET_THIS(me, m_pVTblIEcoCalculatorY);
+    CEcoLab1* pCMe = (CEcoLab1*)((uint64_t)me - sizeof(struct IEcoLab1*) - sizeof(struct IEcoCalculatorX*));
     int32_t result = 0;
 
     if (me == 0) {
@@ -322,7 +316,7 @@ int32_t ECOCALLMETHOD CEcoLab1_Multiplication(IEcoCalculatorYPtr_t me, int16_t a
 
 /* Деление - используем ВКЛЮЧЕНИЕ компонента E */
 int16_t ECOCALLMETHOD CEcoLab1_Division(IEcoCalculatorYPtr_t me, int16_t a, int16_t b) {
-    CEcoLab1* pCMe = ECO_GET_THIS(me, m_pVTblIEcoCalculatorY);
+    CEcoLab1* pCMe = (CEcoLab1*)((uint64_t)me - sizeof(struct IEcoLab1*) - sizeof(struct IEcoCalculatorX*));
     int16_t result = 0;
 
     if (me == 0) {
@@ -330,72 +324,6 @@ int16_t ECOCALLMETHOD CEcoLab1_Division(IEcoCalculatorYPtr_t me, int16_t a, int1
     }
 
 	/* ВКЛЮЧЕНИЕ: вызываем метод внутреннего компонента E */
-    if (pCMe->m_pContainedCalcY_E != 0) {
-        result = pCMe->m_pContainedCalcY_E->pVTbl->Division(pCMe->m_pContainedCalcY_E, a, b);
-    }
-
-    return result;
-}
-
-/* Обёртки для вызова через IEcoLab1 */
-
-/* Add - вызываем Addition через включенный компонент A */
-int32_t ECOCALLMETHOD CEcoLab1_Add(struct IEcoLab1* me, int16_t a, int16_t b) {
-    CEcoLab1* pCMe = (CEcoLab1*)me;
-    int32_t result = 0;
-
-    if (me == 0) {
-        return -1;
-    }
-
-    if (pCMe->m_pContainedCalcX_A != 0) {
-        result = pCMe->m_pContainedCalcX_A->pVTbl->Addition(pCMe->m_pContainedCalcX_A, a, b);
-    }
-
-    return result;
-}
-
-/* Sub - вызываем Subtraction через включенный компонент C */
-int16_t ECOCALLMETHOD CEcoLab1_Sub(struct IEcoLab1* me, int16_t a, int16_t b) {
-    CEcoLab1* pCMe = (CEcoLab1*)me;
-    int16_t result = 0;
-
-    if (me == 0) {
-        return -1;
-    }
-
-    if (pCMe->m_pContainedCalcX_C != 0) {
-        result = pCMe->m_pContainedCalcX_C->pVTbl->Subtraction(pCMe->m_pContainedCalcX_C, a, b);
-    }
-
-    return result;
-}
-
-/* Multiply - вызываем Multiplication через включенный компонент D */
-int32_t ECOCALLMETHOD CEcoLab1_Multiply(struct IEcoLab1* me, int16_t a, int16_t b) {
-    CEcoLab1* pCMe = (CEcoLab1*)me;
-    int32_t result = 0;
-
-    if (me == 0) {
-        return -1;
-    }
-
-    if (pCMe->m_pContainedCalcY_D != 0) {
-        result = pCMe->m_pContainedCalcY_D->pVTbl->Multiplication(pCMe->m_pContainedCalcY_D, a, b);
-    }
-
-    return result;
-}
-
-/* Divide - вызываем Division через включенный компонент E */
-int16_t ECOCALLMETHOD CEcoLab1_Divide(struct IEcoLab1* me, int16_t a, int16_t b) {
-    CEcoLab1* pCMe = (CEcoLab1*)me;
-    int16_t result = 0;
-
-    if (me == 0) {
-        return -1;
-    }
-
     if (pCMe->m_pContainedCalcY_E != 0) {
         result = pCMe->m_pContainedCalcY_E->pVTbl->Division(pCMe->m_pContainedCalcY_E, a, b);
     }
@@ -465,18 +393,15 @@ int16_t ECOCALLMETHOD initCEcoLab1(IEcoLab1Ptr_t me, struct IEcoUnknown *pIUnkSy
 
 /* Создание таблиц виртуальных функций */
 
-/* Virtual Table для IEcoLab1 */
+/* Create Virtual Table IEcoLab1 */
 IEcoLab1VTbl g_x277FC00C35624096AFCFC125B94EEC90VTbl = {
     CEcoLab1_QueryInterface,
     CEcoLab1_AddRef,
     CEcoLab1_Release,
-    CEcoLab1_Add,
-    CEcoLab1_Sub,
-    CEcoLab1_Multiply,
-    CEcoLab1_Divide,
-    CEcoLab1_csort,
-    CEcoLab1_csortInt,
+    CEcoLab1_csort,        /* общий (совместимость) */
+    CEcoLab1_csortInt,     /* специализированный для int32_t */
 };
+
 
 /* Virtual Table для IEcoCalculatorX */
 IEcoCalculatorXVTbl g_xCalcXVTbl = {
@@ -558,7 +483,7 @@ int16_t ECOCALLMETHOD createCEcoLab1(IEcoUnknown* pIUnkSystem, IEcoUnknown* pIUn
     pCMe->m_cRef = 1;
 
     /* Создание таблиц функций интерфейсов */
-    pCMe->m_pVTblIEcoLab1 = &g_x277FC00C35624096AFCFC125B94EEC90VTbl;
+	pCMe->m_pVTblIEcoLab1 = &g_x277FC00C35624096AFCFC125B94EEC90VTbl;
     pCMe->m_pVTblIEcoCalculatorX = &g_xCalcXVTbl;
     pCMe->m_pVTblIEcoCalculatorY = &g_xCalcYVTbl;
 

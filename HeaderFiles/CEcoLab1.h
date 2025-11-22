@@ -54,7 +54,7 @@ typedef struct CEcoLab1 {
     /* Данные экземпляра */
     char_t* m_Name;
     
-    /* Агрегирование компонента */
+    /* Агрегирование компонента B */
     IEcoCalculatorX* m_pAggregatedCalcX;
     
     /* Включение компонентов */
