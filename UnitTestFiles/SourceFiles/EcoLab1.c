@@ -32,6 +32,8 @@
 
 #include "IEcoCalculatorY.h"
 #include "IEcoCalculatorX.h"
+/* Добавлен заголовок для работы с Sink */
+#include "CEcoLab1Sink.h"
 
 #if defined(_MSC_VER)
  #define CDECL __cdecl
@@ -107,7 +109,6 @@ static int CDECL compareIntQ(const void *a, const void *b) {
     if (va > vb) return 1;
     return 0;
 }
-
 
 /*
  *
@@ -359,6 +360,180 @@ int16_t EcoMain(IEcoUnknown* pIUnk) {
 
 		printf("\n=== End of tests ===\n\n");
 	}
+
+
+	{
+		/* общие переменные */
+		IEcoLab1* comps[3] = {0,0,0};          /* будем брать до 3 компонентов */
+		IEcoLab1Events* sinks[3] = {0,0,0};    /* до 3 приёмников */
+		int i, j;
+		int16_t rc;
+
+		printf("=== TEST LAB3 ===\n\n");
+
+		/* ---------- TEST 1: one component -> multiple sinks (1-to-many) ---------- */
+		printf("--- TEST 1 (1-to-many): single component, multiple listeners ---\n");
+		rc = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoLab1, 0, &IID_IEcoLab1, (void**)&comps[0]);
+		if (rc == 0 && comps[0]) {
+			/* создаём 2 приёмника в цикле и подключаем их к одному компоненту */
+			for (i = 0; i < 2; ++i) {
+				if (createCEcoLab1Sink(pIMem, &sinks[i]) != 0) { sinks[i] = 0; continue; }
+				/* каждый sink сам регистрирует себя на компоненте через Advise */
+				((CEcoLab1Sink*)sinks[i])->Advise((CEcoLab1Sink*)sinks[i], comps[0]);
+				printf("Listener %d advised to component0\n", i+1);
+			}
+
+			/* запускаем сортировку — оба приёмника должны получить события */
+			{
+				int32_t arr[] = { 15, 3, 8, 3, 12 };
+				size_t n = sizeof(arr)/sizeof(arr[0]);
+				printf("\nSorting array: ");
+				for (i = 0; i < (int)n; ++i) printf("%d ", arr[i]);
+				printf("\n\n");
+				comps[0]->pVTbl->csortInt(comps[0], arr, (size_t)n);
+				printf("\nSorted result: ");
+				for (i = 0; i < (int)n; ++i) printf("%d ", arr[i]);
+				printf("\n");
+			}
+
+			/* отключаем и очищаем */
+			for (i = 0; i < 2; ++i) {
+				if (sinks[i]) {
+					((CEcoLab1Sink*)sinks[i])->Unadvise((CEcoLab1Sink*)sinks[i], comps[0]);
+					sinks[i]->pVTbl->Release(sinks[i]);
+					sinks[i] = 0;
+				}
+			}
+			comps[0]->pVTbl->Release(comps[0]);
+			comps[0] = 0;
+		} else {
+			printf("TEST1: failed to obtain component0 (rc=%d)\n", rc);
+		}
+
+		/* ---------- TEST 2: multiple components -> single sink (many-to-1), подключение через массив ---------- */
+		printf("\n--- TEST 2 (many-to-1): two components, one shared listener ---\n");
+		rc = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoLab1, 0, &IID_IEcoLab1, (void**)&comps[0]);
+		rc |= pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoLab1, 0, &IID_IEcoLab1, (void**)&comps[1]);
+		if (rc == 0 && comps[0] && comps[1]) {
+			if (createCEcoLab1Sink(pIMem, &sinks[0]) == 0) {
+				CEcoLab1Sink* shared = (CEcoLab1Sink*)sinks[0];
+				/* подключаем один и тот же приёмник к обоим компонентам */
+				shared->Advise(shared, comps[0]);
+				shared->Advise(shared, comps[1]);
+				printf("Shared listener advised to component0 and component1\n");
+
+				/* запускаем сортировки на каждом компоненте по очереди */
+				{
+					int32_t a1[4] = { 25, 10, 18, 30 };
+					int32_t a2[4] = { 42, 7, 33, 19 };
+					printf("\nComponent0 sorting [25,10,18,30]\n\n");
+					comps[0]->pVTbl->csortInt(comps[0], a1, 4);
+					printf("\nSorted result: ");
+					for (i = 0; i < (int)4; ++i) printf("%d ", a1[i]);
+					printf("\n\n");
+					printf("Component1 sorting [42,7,33,19]\n\n");
+					comps[1]->pVTbl->csortInt(comps[1], a2, 4);
+					printf("\nSorted result: ");
+					for (i = 0; i < (int)4; ++i) printf("%d ", a2[i]);
+					printf("\n\n");
+				}
+
+				/* очистка: отписываем shared listener от обоих компонентов */
+				shared->Unadvise(shared, comps[0]);
+				shared->Unadvise(shared, comps[1]);
+				sinks[0]->pVTbl->Release(sinks[0]);
+				sinks[0] = 0;
+			} else {
+				printf("TEST2: failed to create shared listener\n");
+			}
+
+			/* освобождение компонентов */
+			comps[0]->pVTbl->Release(comps[0]);
+			comps[1]->pVTbl->Release(comps[1]);
+			comps[0] = comps[1] = 0;
+		} else {
+			printf("TEST2: failed to obtain two components (rc=%d)\n", rc);
+		}
+
+		/* ---------- TEST 3: many-to-many — три компонента и три приёмника, пересекающиеся подписки ---------- */
+		printf("\n--- TEST 3 (many-to-many): 3 components <-> 3 listeners (overlapped subscriptions) ---\n");
+		/* запросим 3 экземпляра компонента */
+		for (i = 0; i < 3; ++i) {
+			rc = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoLab1, 0, &IID_IEcoLab1, (void**)&comps[i]);
+			if (rc != 0 || comps[i] == 0) {
+				printf("  failed to create component %d (rc=%d)\n", i, rc);
+				/* отметим неуспешно полученные — остальные всё равно будем чистить */
+			}
+		}
+
+		/* создаём три приёмника */
+		for (i = 0; i < 3; ++i) {
+			if (createCEcoLab1Sink(pIMem, &sinks[i]) != 0) {
+				sinks[i] = 0;
+				printf("  failed to create sink %d\n", i);
+			}
+		}
+
+		/* схема подписок (пересечения):
+		   sink0 -> comp0, comp1
+		   sink1 -> comp1, comp2
+		   sink2 -> comp0, comp2
+		*/
+		if (sinks[0] && comps[0]) ((CEcoLab1Sink*)sinks[0])->Advise((CEcoLab1Sink*)sinks[0], comps[0]);
+		if (sinks[0] && comps[1]) ((CEcoLab1Sink*)sinks[0])->Advise((CEcoLab1Sink*)sinks[0], comps[1]);
+
+		if (sinks[1] && comps[1]) ((CEcoLab1Sink*)sinks[1])->Advise((CEcoLab1Sink*)sinks[1], comps[1]);
+		if (sinks[1] && comps[2]) ((CEcoLab1Sink*)sinks[1])->Advise((CEcoLab1Sink*)sinks[1], comps[2]);
+
+		if (sinks[2] && comps[0]) ((CEcoLab1Sink*)sinks[2])->Advise((CEcoLab1Sink*)sinks[2], comps[0]);
+		if (sinks[2] && comps[2]) ((CEcoLab1Sink*)sinks[2])->Advise((CEcoLab1Sink*)sinks[2], comps[2]);
+
+		/* Для каждого компонента выполним свою сортировку — посмотрим как каждый listener получает события */
+		{
+			int32_t arrs[3][5] = {
+				{ 9, 4, 6, 1, 7 },   /* для comp0 */
+				{ 20, 5, 11, 3, 8 }, /* для comp1 */
+				{ 14, 2, 13, 0, 12 } /* для comp2 */
+			};
+			for (i = 0; i < 3; ++i) {
+				if (comps[i]) {
+					printf("\nComponent %d sorting -> ", i);
+					for (j = 0; j < 5; ++j) printf("%d ", arrs[i][j]);
+					printf("\n");
+					comps[i]->pVTbl->csortInt(comps[i], arrs[i], 5);
+					printf("Result comp %d: ", i);
+					for (j = 0; j < 5; ++j) printf("%d ", arrs[i][j]);
+					printf("\n");
+				}
+			}
+		}
+
+		/* Очистка: отписываем все связи и освобождаем ресурсы */
+		/* Удаляем все Advise в соответствии со схемой подписок */
+		if (sinks[0]) {
+			if (comps[0]) ((CEcoLab1Sink*)sinks[0])->Unadvise((CEcoLab1Sink*)sinks[0], comps[0]);
+			if (comps[1]) ((CEcoLab1Sink*)sinks[0])->Unadvise((CEcoLab1Sink*)sinks[0], comps[1]);
+			sinks[0]->pVTbl->Release(sinks[0]); sinks[0] = 0;
+		}
+		if (sinks[1]) {
+			if (comps[1]) ((CEcoLab1Sink*)sinks[1])->Unadvise((CEcoLab1Sink*)sinks[1], comps[1]);
+			if (comps[2]) ((CEcoLab1Sink*)sinks[1])->Unadvise((CEcoLab1Sink*)sinks[1], comps[2]);
+			sinks[1]->pVTbl->Release(sinks[1]); sinks[1] = 0;
+		}
+		if (sinks[2]) {
+			if (comps[0]) ((CEcoLab1Sink*)sinks[2])->Unadvise((CEcoLab1Sink*)sinks[2], comps[0]);
+			if (comps[2]) ((CEcoLab1Sink*)sinks[2])->Unadvise((CEcoLab1Sink*)sinks[2], comps[2]);
+			sinks[2]->pVTbl->Release(sinks[2]); sinks[2] = 0;
+		}
+
+		/* освобождаем компоненты */
+		for (i = 0; i < 3; ++i) {
+			if (comps[i]) { comps[i]->pVTbl->Release(comps[i]); comps[i] = 0; }
+		}
+
+		printf("\n===== End of reworked LAB3 tests =====\n\n");
+	}
+
 
 Release:
 

@@ -22,6 +22,8 @@
 #include "CEcoLab1ConnectionPoint.h"
 #include "CEcoLab1EnumConnections.h"
 
+#define INITIAL_SINK_CAPACITY 4
+
 /*
  *
  * <сводка>
@@ -117,7 +119,7 @@ int16_t ECOCALLMETHOD CEcoLab1ConnectionPoint_GetConnectionInterface(/* in */ st
         return -1;
     }
 
-    pIID = (UGUID *)&pCMe->m_piid;
+    *pIID = *pCMe->m_piid;
     return 0;
 }
 
@@ -132,7 +134,7 @@ int16_t ECOCALLMETHOD CEcoLab1ConnectionPoint_GetConnectionInterface(/* in */ st
  * </описание>
  *
  */
- int16_t ECOCALLMETHOD CEcoLab1ConnectionPoint_GetConnectionPointContainer(/* in */ struct IEcoConnectionPoint* me, /* out */ struct IEcoConnectionPointContainer **ppICPC) {
+int16_t ECOCALLMETHOD CEcoLab1ConnectionPoint_GetConnectionPointContainer(/* in */ struct IEcoConnectionPoint* me, /* out */ struct IEcoConnectionPointContainer **ppICPC) {
     CEcoLab1ConnectionPoint* pCMe = (CEcoLab1ConnectionPoint*)me;
 
     if (me == 0 || ppICPC == 0) {
@@ -171,14 +173,39 @@ int16_t ECOCALLMETHOD CEcoLab1ConnectionPoint_Advise(/* in */ struct IEcoConnect
     if (result == 0 && pCD->pUnk != 0) {
         pCD->cCookie = ++pCMe->m_cNextCookie;
 
-        /* Добавление в список */
-        pCMe->m_pSinkList->pVTbl->Add(pCMe->m_pSinkList, pCD);
+        /* Проверка и увеличение ёмкости массива при необходимости */
+        if (pCMe->m_cSinks >= pCMe->m_cSinksCapacity) {
+            uint32_t newCapacity = pCMe->m_cSinksCapacity * 2;
+            EcoConnectionData** pNewArray = (EcoConnectionData**)pCMe->m_pIMem->pVTbl->Alloc(pCMe->m_pIMem, sizeof(EcoConnectionData*) * newCapacity);
+            
+            if (pNewArray == 0) {
+                pCMe->m_pIMem->pVTbl->Free(pCMe->m_pIMem, pCD);
+                return -1;
+            }
+
+            /* Копирование существующих элементов */
+            if (pCMe->m_pSinkArray != 0) {
+                uint32_t i;
+                for (i = 0; i < pCMe->m_cSinks; i++) {
+                    pNewArray[i] = pCMe->m_pSinkArray[i];
+                }
+                pCMe->m_pIMem->pVTbl->Free(pCMe->m_pIMem, pCMe->m_pSinkArray);
+            }
+
+            pCMe->m_pSinkArray = pNewArray;
+            pCMe->m_cSinksCapacity = newCapacity;
+        }
+
+        /* Добавление нового sink'а */
+        pCMe->m_pSinkArray[pCMe->m_cSinks] = pCD;
+        pCMe->m_cSinks++;
 
         /* Возвращение куки */
         *pcCookie = pCD->cCookie;
         return 0;
     }
 
+    pCMe->m_pIMem->pVTbl->Free(pCMe->m_pIMem, pCD);
     return -1;
 }
 
@@ -198,20 +225,25 @@ int16_t ECOCALLMETHOD CEcoLab1ConnectionPoint_Unadvise(/* in */ struct IEcoConne
     EcoConnectionData* pCD = 0;
     IEcoUnknown* pSink = 0;
     uint32_t indx = 0;
-    uint32_t count = 0;
 
     if (me == 0 ) {
         return -1;
     }
 
-    count = pCMe->m_pSinkList->pVTbl->Count(pCMe->m_pSinkList);
-    for (indx = 0; indx < count; indx++) {
-        pCD = (EcoConnectionData*)pCMe->m_pSinkList->pVTbl->Item(pCMe->m_pSinkList, indx);
+    for (indx = 0; indx < pCMe->m_cSinks; indx++) {
+        pCD = pCMe->m_pSinkArray[indx];
         if (pCD->cCookie == cCookie) {
             pSink = pCD->pUnk;
 
-            /* Удаление из саиска */
-            pCMe->m_pSinkList->pVTbl->RemoveAt(pCMe->m_pSinkList, indx);
+            /* Удаление из массива (сдвиг элементов) */
+            {
+                uint32_t i;
+                for (i = indx; i < pCMe->m_cSinks - 1; i++) {
+                    pCMe->m_pSinkArray[i] = pCMe->m_pSinkArray[i + 1];
+                }
+            }
+            pCMe->m_cSinks--;
+
             pSink->pVTbl->Release(pSink);
             pCMe->m_pIMem->pVTbl->Free(pCMe->m_pIMem, pCD);
             return 0;
@@ -238,8 +270,8 @@ int16_t ECOCALLMETHOD CEcoLab1ConnectionPoint_EnumConnections(/* in */ struct IE
         return -1;
     }
 
-    /* Создание нумератора подключений1 */
-    return createCEcoLab1EnumConnections((IEcoUnknown*)pCMe->m_pISys, pCMe->m_pSinkList, ppEnum);
+    /* Создание нумератора подключений */
+    return createCEcoLab1EnumConnections((IEcoUnknown*)pCMe->m_pISys, pCMe->m_pSinkArray, pCMe->m_cSinks, ppEnum);
 }
 
 /* Create Virtual Table IEcoConnectionPointVTbl */
@@ -324,17 +356,20 @@ int16_t ECOCALLMETHOD createCEcoLab1ConnectionPoint(/* in */ IEcoUnknown* pIUnkS
     /* Создание таблицы функций интерфейса IEcoConnectionPoint */
     pCMe->m_pVTblICP = &g_x0000000300000000C000000000000046VTblCP;
 	
-
-    /* Создание экземпляра работы со списком */
-    pCMe->m_pSinkList = 0;
-    result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoList1, 0, &IID_IEcoList1, (void**)&pCMe->m_pSinkList);
-    if (result != 0 || pCMe->m_pSinkList == 0) {
-        deleteCEcoLab1ConnectionPoint((IEcoConnectionPoint*)pCMe);
-        return result;
+    /* Инициализация массива sink'ов */
+    pCMe->m_cSinks = 0;
+    pCMe->m_cSinksCapacity = INITIAL_SINK_CAPACITY;
+    pCMe->m_pSinkArray = (EcoConnectionData**)pIMem->pVTbl->Alloc(pIMem, sizeof(EcoConnectionData*) * INITIAL_SINK_CAPACITY);
+    
+    if (pCMe->m_pSinkArray == 0) {
+        pIMem->pVTbl->Free(pIMem, pCMe);
+        pIMem->pVTbl->Release(pIMem);
+        pISys->pVTbl->Release(pISys);
+        return -1;
     }
-
+    
     /* Возврат указателя на интерфейс */
-    *ppICP = (IEcoConnectionPoint*)pCMe;
+    *ppICP = (IEcoConnectionPoint*)&pCMe->m_pVTblICP;
 
     return 0;
 }
@@ -354,23 +389,27 @@ void ECOCALLMETHOD deleteCEcoLab1ConnectionPoint(/* in */ IEcoConnectionPoint* p
     CEcoLab1ConnectionPoint* pCMe = 0;
     IEcoMemoryAllocator1* pIMem = 0;
     EcoConnectionData* pCD = 0;
-    uint32_t count = 0;
     uint32_t index = 0;
 
     if (pICP != 0 ) {
         /* Преобразование */
         pCMe = (CEcoLab1ConnectionPoint*)pICP;
         pIMem = pCMe->m_pIMem;
-        /* Освобождение */
-        if (pCMe->m_pSinkList != 0) {
-            count = pCMe->m_pSinkList->pVTbl->Count(pCMe->m_pSinkList);
-            for (index = 0; index < count; index++) {
-                pCD = (EcoConnectionData*)pCMe->m_pSinkList->pVTbl->Item(pCMe->m_pSinkList, index);
-                pIMem->pVTbl->Free(pIMem, pCD);
+        
+        /* Освобождение массива sink'ов */
+        if (pCMe->m_pSinkArray != 0) {
+            for (index = 0; index < pCMe->m_cSinks; index++) {
+                pCD = pCMe->m_pSinkArray[index];
+                if (pCD != 0) {
+                    if (pCD->pUnk != 0) {
+                        pCD->pUnk->pVTbl->Release(pCD->pUnk);
+                    }
+                    pIMem->pVTbl->Free(pIMem, pCD);
+                }
             }
-            pCMe->m_pSinkList->pVTbl->Clear(pCMe->m_pSinkList);
-            pCMe->m_pSinkList->pVTbl->Release(pCMe->m_pSinkList);
+            pIMem->pVTbl->Free(pIMem, pCMe->m_pSinkArray);
         }
+        
         if (pCMe->m_pISys != 0) {
             pCMe->m_pISys->pVTbl->Release(pCMe->m_pISys);
             pCMe->m_pISys = 0;

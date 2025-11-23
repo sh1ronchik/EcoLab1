@@ -168,12 +168,23 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\HeaderFiles\CEcoLab1.h" />
+    <ClInclude Include="..\..\..\HeaderFiles\CEcoLab1ConnectionPoint.h" />
+    <ClInclude Include="..\..\..\HeaderFiles\CEcoLab1EnumConnectionPoints.h" />
+    <ClInclude Include="..\..\..\HeaderFiles\CEcoLab1EnumConnections.h" />
     <ClInclude Include="..\..\..\HeaderFiles\CEcoLab1Factory.h" />
     <ClInclude Include="..\..\..\SharedFiles\IdEcoLab1.h" />
+    <ClInclude Include="..\..\..\SharedFiles\IEcoConnectionPoint.h" />
+    <ClInclude Include="..\..\..\SharedFiles\IEcoConnectionPointContainer.h" />
+    <ClInclude Include="..\..\..\SharedFiles\IEcoEnumConnectionPoints.h" />
+    <ClInclude Include="..\..\..\SharedFiles\IEcoEnumConnections.h" />
     <ClInclude Include="..\..\..\SharedFiles\IEcoLab1.h" />
+    <ClInclude Include="..\..\..\SharedFiles\IEcoLab1Events.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\SourceFiles\CEcoLab1.c" />
+    <ClCompile Include="..\..\..\SourceFiles\CEcoLab1ConnectionPoint.c" />
+    <ClCompile Include="..\..\..\SourceFiles\CEcoLab1EnumConnectionPoints.c" />
+    <ClCompile Include="..\..\..\SourceFiles\CEcoLab1EnumConnections.c" />
     <ClCompile Include="..\..\..\SourceFiles\CEcoLab1Factory.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -35,12 +35,45 @@
     <ClInclude Include="..\..\..\SharedFiles\IEcoLab1.h">
       <Filter>Shared Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\HeaderFiles\CEcoLab1ConnectionPoint.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\HeaderFiles\CEcoLab1EnumConnectionPoints.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\HeaderFiles\CEcoLab1EnumConnections.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SharedFiles\IEcoEnumConnections.h">
+      <Filter>Shared Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SharedFiles\IEcoConnectionPoint.h">
+      <Filter>Shared Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SharedFiles\IEcoConnectionPointContainer.h">
+      <Filter>Shared Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SharedFiles\IEcoEnumConnectionPoints.h">
+      <Filter>Shared Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\SharedFiles\IEcoLab1Events.h">
+      <Filter>Shared Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\SourceFiles\CEcoLab1.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\SourceFiles\CEcoLab1Factory.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SourceFiles\CEcoLab1EnumConnections.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SourceFiles\CEcoLab1ConnectionPoint.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\SourceFiles\CEcoLab1EnumConnectionPoints.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

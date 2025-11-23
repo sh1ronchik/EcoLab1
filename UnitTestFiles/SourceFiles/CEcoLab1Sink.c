@@ -99,28 +99,83 @@ uint32_t ECOCALLMETHOD CEcoLab1Sink_Release(/* in */ struct IEcoLab1Events* me) 
     return pCMe->m_cRef;
 }
 
+
 /*
  *
  * <сводка>
- *   Функция OnMyCallback
+ *   Функция OnRangeDetected
  * </сводка>
  *
  * <описание>
- *   Функция обратного вызова
+ *   Обработчик события обнаружения диапазона значений для сортировки
  * </описание>
  *
  */
-int16_t ECOCALLMETHOD CEcoLab1Sink_OnMyCallback(/* in */ struct IEcoLab1Events* me, /* in */ char_t* Name) {
+int16_t ECOCALLMETHOD CEcoLab1Sink_OnRangeDetected(/* in */ struct IEcoLab1Events* me, /* in */ int32_t minValue, /* in */ int32_t maxValue, /* in */ uint32_t rangeSize) {
     CEcoLab1Sink* pCMe = (CEcoLab1Sink*)me;
 
-    if (me == 0 ) {
+    if (me == 0) {
         return -1;
     }
 
+    pCMe->m_operationCount++;
+	printf("  Sink # %p: RANGE DETECTED -> min=%d, max=%d, range=%u\n", 
+           (void*)pCMe, minValue, maxValue, rangeSize);
 
     return 0;
 }
 
+/* Реализован обработчик события инкремента счётчика */
+/*
+ *
+ * <сводка>
+ *   Функция OnCountIncrement
+ * </сводка>
+ *
+ * <описание>
+ *   Обработчик события увеличения счётчика для конкретного значения
+ * </описание>
+ *
+ */
+int16_t ECOCALLMETHOD CEcoLab1Sink_OnCountIncrement(/* in */ struct IEcoLab1Events* me, /* in */ int32_t value, /* in */ uint32_t currentCount) {
+    CEcoLab1Sink* pCMe = (CEcoLab1Sink*)me;
+
+    if (me == 0) {
+        return -1;
+    }
+
+    pCMe->m_operationCount++;
+    printf("  Sink # %p: COUNT INCREMENT -> value=%d, count now=%u\n", 
+           (void*)pCMe, value, currentCount);
+
+    return 0;
+}
+
+/* Реализован обработчик события размещения элемента */
+/*
+ *
+ * <сводка>
+ *   Функция OnPlaceElement
+ * </сводка>
+ *
+ * <описание>
+ *   Обработчик события размещения элемента в отсортированном массиве
+ * </описание>
+ *
+ */
+int16_t ECOCALLMETHOD CEcoLab1Sink_OnPlaceElement(/* in */ struct IEcoLab1Events* me, /* in */ int32_t value, /* in */ uint32_t position) {
+    CEcoLab1Sink* pCMe = (CEcoLab1Sink*)me;
+
+    if (me == 0) {
+        return -1;
+    }
+
+    pCMe->m_operationCount++;
+    printf("  Sink # %p: PLACE ELEMENT -> value=%d at position=%u\n", 
+           (void*)pCMe, value, position);
+
+    return 0;
+}
 
 /*
  *
@@ -192,7 +247,9 @@ IEcoLab1VTblEvents g_x2D2E3B9214F248A6A09ECB494B59C795VTblEvents = {
     CEcoLab1Sink_QueryInterface,
     CEcoLab1Sink_AddRef,
     CEcoLab1Sink_Release,
-    CEcoLab1Sink_OnMyCallback
+    CEcoLab1Sink_OnRangeDetected,
+    CEcoLab1Sink_OnCountIncrement,
+    CEcoLab1Sink_OnPlaceElement
 };
 
 /*
@@ -224,9 +281,15 @@ int16_t ECOCALLMETHOD createCEcoLab1Sink(/* in */ IEcoMemoryAllocator1* pIMem, /
 
     /* Установка счетчика ссылок на компонент */
     pCMe->m_cRef = 1;
+    pCMe->m_cCookie = 0;
+    /* Инициализация счётчика операций */
+    pCMe->m_operationCount = 0;
 
-    /* Создание таблицы функций интерфейса IEcoP2PEvents */
+    /* Создание таблицы функций интерфейса IEcoLab1Events */
     pCMe->m_pVTblIEcoLab1Events = &g_x2D2E3B9214F248A6A09ECB494B59C795VTblEvents;
+
+	pCMe->Advise = CEcoLab1Sink_Advise;
+    pCMe->Unadvise = CEcoLab1Sink_Unadvise;
 
     *ppIEcoLab1Events = (IEcoLab1Events*)pCMe;
 

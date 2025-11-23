@@ -114,8 +114,8 @@ int16_t ECOCALLMETHOD CEcoLab1EnumConnections_Next(/* in */ struct IEcoEnumConne
         return -1;
     }
 
-    while ((pCMe->m_cIndex < pCMe->m_pSinkList->pVTbl->Count(pCMe->m_pSinkList)) && (count < cConnections)) {
-        pCD = (EcoConnectionData*)pCMe->m_pSinkList->pVTbl->Item(pCMe->m_pSinkList, pCMe->m_cIndex);
+    while ((pCMe->m_cIndex < pCMe->m_cSinks) && (count < cConnections)) {
+        pCD = pCMe->m_pSinkArray[pCMe->m_cIndex];
         pCD->pUnk->pVTbl->AddRef(pCD->pUnk);
         rgcd->pUnk = pCD->pUnk;
         rgcd->cCookie = pCD->cCookie;
@@ -156,7 +156,7 @@ int16_t ECOCALLMETHOD CEcoLab1EnumConnections_Skip(/* in */ struct IEcoEnumConne
         return -1;
     }
 
-    while ((pCMe->m_cIndex < pCMe->m_pSinkList->pVTbl->Count(pCMe->m_pSinkList)) && (count < cConnections)) {
+    while ((pCMe->m_cIndex < pCMe->m_cSinks) && (count < cConnections)) {
         count++;
         pCMe->m_cIndex++;
     };
@@ -212,7 +212,7 @@ int16_t ECOCALLMETHOD CEcoLab1EnumConnections_Clone(/* in */ struct IEcoEnumConn
         return -1;
     }
 
-    return createCEcoLab1EnumConnections((IEcoUnknown*)pCMe->m_pISys, pCMe->m_pSinkList, ppEnum);
+    return createCEcoLab1EnumConnections((IEcoUnknown*)pCMe->m_pISys, pCMe->m_pSinkArray, pCMe->m_cSinks, ppEnum);
 }
 
 /* Create Virtual Table IEcoEnumConnectionsVTbl */
@@ -237,7 +237,7 @@ IEcoEnumConnectionsVTbl g_x0000000200000000C000000000000046VTblECP = {
  * </описание>
  *
  */
-int16_t ECOCALLMETHOD createCEcoLab1EnumConnections(/* in */ IEcoUnknown* pIUnkSystem, /* in */ IEcoList1* pIList, /* out */ IEcoEnumConnections** ppIEnum) {
+int16_t ECOCALLMETHOD createCEcoLab1EnumConnections(/* in */ IEcoUnknown* pIUnkSystem, /* in */ EcoConnectionData** pArray, /* in */ uint32_t cSinks, /* out */ IEcoEnumConnections** ppIEnum) {
     CEcoLab1EnumConnections* pCMe = 0;
     IEcoSystem1* pISys = 0;
     IEcoInterfaceBus1* pIBus = 0;
@@ -250,7 +250,7 @@ int16_t ECOCALLMETHOD createCEcoLab1EnumConnections(/* in */ IEcoUnknown* pIUnkS
     uint32_t indx = 0;
 
     /* Проверка указателей */
-    if (ppIEnum == 0 || pIUnkSystem == 0 || pIList == 0) {
+    if (ppIEnum == 0 || pIUnkSystem == 0) {
         return result;
     }
 
@@ -296,21 +296,27 @@ int16_t ECOCALLMETHOD createCEcoLab1EnumConnections(/* in */ IEcoUnknown* pIUnkS
     /* Создание таблицы функций интерфейса IEcoEnumConnections */
     pCMe->m_pVTblIEC = &g_x0000000200000000C000000000000046VTblECP;
 
-    /* Получение интерфейса для работы со строкой */
-    pCMe->m_pSinkList = 0;
-    result = pIBus->pVTbl->QueryComponent(pIBus, &CID_EcoList1, 0,  &IID_IEcoList1, (void**)&pCMe->m_pSinkList);
-    if (result != 0 || pCMe->m_pSinkList == 0) {
-        deleteCEcoLab1EnumConnections((IEcoEnumConnections*)pCMe);
-        return result;
+    /* Копирование массива подключений */
+    pCMe->m_cSinks = cSinks;
+    pCMe->m_pSinkArray = 0;
+    
+    if (cSinks > 0 && pArray != 0) {
+        pCMe->m_pSinkArray = (EcoConnectionData**)pIMem->pVTbl->Alloc(pIMem, sizeof(EcoConnectionData*) * cSinks);
+        if (pCMe->m_pSinkArray == 0) {
+            deleteCEcoLab1EnumConnections((IEcoEnumConnections*)pCMe);
+            return -1;
+        }
+        
+        for (indx = 0; indx < cSinks; indx++) {
+            pCD = pArray[indx];
+            pNewCD = (EcoConnectionData*)pIMem->pVTbl->Alloc(pIMem, sizeof(EcoConnectionData));
+            pNewCD->cCookie = pCD->cCookie;
+            pNewCD->pUnk = pCD->pUnk;
+            pNewCD->pUnk->pVTbl->AddRef(pNewCD->pUnk);
+            pCMe->m_pSinkArray[indx] = pNewCD;
+        }
     }
-    for (indx = 0; indx < pIList->pVTbl->Count(pIList); indx++) {
-        pCD = (EcoConnectionData*)pIList->pVTbl->Item(pIList, indx);
-        pNewCD = (EcoConnectionData*)pIMem->pVTbl->Alloc(pIMem, sizeof(EcoConnectionData));
-        pNewCD->cCookie = pCD->cCookie;
-        pNewCD->pUnk = pCD->pUnk;
-        pNewCD->pUnk->pVTbl->AddRef(pNewCD->pUnk);
-        pCMe->m_pSinkList->pVTbl->Add(pCMe->m_pSinkList, pNewCD);
-    }
+    
     pCMe->m_cIndex = 0;
 
     /* Возврат указателя на интерфейс */
@@ -338,16 +344,21 @@ void ECOCALLMETHOD deleteCEcoLab1EnumConnections(/* in */ IEcoEnumConnections* p
 
     if (pIEnum != 0 ) {
         pIMem = pCMe->m_pIMem;
+        
         /* Освобождение */
-        if (pCMe->m_pSinkList != 0) {
-            for (indx = 0; indx < pCMe->m_pSinkList->pVTbl->Count(pCMe->m_pSinkList); indx++) {
-                pCD = (EcoConnectionData*)pCMe->m_pSinkList->pVTbl->Item(pCMe->m_pSinkList, indx);
-                pCD->pUnk->pVTbl->Release(pCD->pUnk);
-                pIMem->pVTbl->Free(pIMem, pCD);
+        if (pCMe->m_pSinkArray != 0) {
+            for (indx = 0; indx < pCMe->m_cSinks; indx++) {
+                pCD = pCMe->m_pSinkArray[indx];
+                if (pCD != 0) {
+                    if (pCD->pUnk != 0) {
+                        pCD->pUnk->pVTbl->Release(pCD->pUnk);
+                    }
+                    pIMem->pVTbl->Free(pIMem, pCD);
+                }
             }
-            pCMe->m_pSinkList->pVTbl->Clear(pCMe->m_pSinkList);
-            pCMe->m_pSinkList->pVTbl->Release(pCMe->m_pSinkList);
+            pIMem->pVTbl->Free(pIMem, pCMe->m_pSinkArray);
         }
+        
         if (pCMe->m_pISys != 0) {
             pCMe->m_pISys->pVTbl->Release(pCMe->m_pISys);
             pCMe->m_pISys = 0;

@@ -39,11 +39,10 @@ typedef struct IEcoLab1VTblEvents {
     uint32_t (ECOCALLMETHOD *AddRef )(/* in */ struct IEcoLab1Events* me);
     uint32_t (ECOCALLMETHOD *Release )(/* in */ struct IEcoLab1Events* me);
 
-    /* IEcoLab1Events */
-    int16_t (ECOCALLMETHOD *OnInsertSortCall)(/* in */ struct IEcoLab1Events* me);
-    int16_t (ECOCALLMETHOD *OnSwapCall)(/* in */ struct IEcoLab1Events* me, int step, int index, const void *startPtr, size_t size);
-    int16_t (ECOCALLMETHOD *BeforeSort)(/* in */ struct IEcoLab1Events* me, /* in */ const void *startPtr, size_t size);
-    int16_t (ECOCALLMETHOD *AfterSort)(/* in */ struct IEcoLab1Events* me, /* in */ const void *startPtr, size_t size);
+    /* IEcoLab1Events - Counting Sort Events */
+    int16_t (ECOCALLMETHOD *OnRangeDetected)(/* in */ struct IEcoLab1Events* me, /* in */ int32_t minValue, /* in */ int32_t maxValue, /* in */ uint32_t rangeSize);
+    int16_t (ECOCALLMETHOD *OnCountIncrement)(/* in */ struct IEcoLab1Events* me, /* in */ int32_t value, /* in */ uint32_t currentCount);
+    int16_t (ECOCALLMETHOD *OnPlaceElement)(/* in */ struct IEcoLab1Events* me, /* in */ int32_t value, /* in */ uint32_t position);
 
 } IEcoLab1VTblEvents, *IEcoLab1VTblEventsPtr;
 

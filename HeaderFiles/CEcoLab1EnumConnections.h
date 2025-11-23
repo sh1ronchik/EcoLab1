@@ -33,8 +33,10 @@ typedef struct CEcoLab1EnumConnections {
     /* Счетчик ссылок */
     uint32_t m_cRef;
 
-    /* Список подключений */
-    IEcoList1* m_pSinkList;
+    /* Массив подключений */
+    EcoConnectionData** m_pSinkArray;
+    uint32_t m_cSinks;
+
     uint32_t m_cIndex;
 
     /* Интерфейс для работы с памятью */
@@ -46,7 +48,7 @@ typedef struct CEcoLab1EnumConnections {
 } CEcoLab1EnumConnections;
 
 /* Создание экземпляра */
-int16_t ECOCALLMETHOD createCEcoLab1EnumConnections(/* in */ IEcoUnknown* pIUnkSystem, /* in */ IEcoList1* pIList, /* out */ IEcoEnumConnections** ppIEnum);
+int16_t ECOCALLMETHOD createCEcoLab1EnumConnections(/* in */ IEcoUnknown* pIUnkSystem, /* in */ EcoConnectionData** pArray, /* in */ uint32_t cSinks, /* out */ IEcoEnumConnections** ppIEnum);
 /* Удаление */
 void ECOCALLMETHOD deleteCEcoLab1EnumConnections(/* in */ IEcoEnumConnections* pIEnum);
 

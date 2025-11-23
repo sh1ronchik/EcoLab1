@@ -40,7 +40,9 @@ typedef struct CEcoLab1Sink {
 
     /* Интерфейс для работы с памятью */
     IEcoMemoryAllocator1* m_pIMem;
-
+    
+    /* Счётчик операций для отслеживания шагов */
+    uint32_t m_operationCount;
 
 } CEcoLab1Sink, *CEcoLab1SinkPtr;
 

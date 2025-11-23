@@ -25,6 +25,7 @@
 #include "IdEcoList1.h"
 #include "IEcoSystem1.h"
 #include "IdEcoMemoryManager1.h"
+#include "IEcoEnumConnections.h"
 
 typedef struct CEcoLab1ConnectionPoint {
 
@@ -40,8 +41,11 @@ typedef struct CEcoLab1ConnectionPoint {
     /* Cookie */
     uint32_t m_cNextCookie;
 
-    /* Список подключений */
+    /* Массив подключений */
     IEcoList1* m_pSinkList;
+    EcoConnectionData** m_pSinkArray;
+    uint32_t m_cSinks;
+    uint32_t m_cSinksCapacity;
 
     /* Интерфейс для работы с памятью */
     IEcoMemoryAllocator1* m_pIMem;

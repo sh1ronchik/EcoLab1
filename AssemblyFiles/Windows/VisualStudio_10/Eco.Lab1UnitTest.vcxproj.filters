@@ -26,5 +26,13 @@
     <ClCompile Include="..\..\..\UnitTestFiles\SourceFiles\EcoLab1.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\UnitTestFiles\SourceFiles\CEcoLab1Sink.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\UnitTestFiles\HeaderFiles\CEcoLab1Sink.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
